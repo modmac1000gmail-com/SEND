@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام الدعوات الإلكتروني</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.7.14/lottie.min.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
+        .animate-gradient {
+            background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .input-animation {
+            transition: all 0.3s ease;
+        }
+
+        .input-animation:focus {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+        }
+
+        .button-animation {
+            transition: all 0.3s ease;
+        }
+
+        .button-animation:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+        }
+
+        .success-animation {
+            animation: successPulse 2s ease-in-out;
+        }
+
+        @keyframes successPulse {
+            0% { transform: scale(0.8); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .card-animation {
+            transition: all 0.5s ease;
+        }
+
+        .card-animation:hover {
+            transform: translateY(-5px) scale(1.01);
+        }
+    </style>
+</head>
+<body class="animate-gradient min-h-screen flex items-center justify-center p-6">
+    <div class="w-full max-w-md">
+        <div class="glassmorphism rounded-[30px] p-8 card-animation">
+            <!-- رأس الصفحة -->
+            <div class="text-center mb-12">
+                <div class="floating mb-6">
+                    <h1 class="text-5xl font-black bg-clip-text text-transparent bg-gradient-to-r from-purple-600 to-pink-600 mb-3">
+                        نظام الدعوات
+                    </h1>
+                    <p class="text-gray-600 text-lg">سجل حضورك وأحصل على الباركود الخاص بك</p>
+                </div>
+            </div>
+
+            <!-- نموذج التسجيل -->
+            <div id="registrationForm" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="block text-gray-700 font-bold text-lg">الاسم الكامل</label>
+                    <input type="text" id="fullName" 
+                        class="w-full h-14 px-6 text-lg rounded-2xl border-2 border-gray-200 input-animation focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                        placeholder="ادخل اسمك الكامل">
+                </div>
+                
+                <div class="space-y-2">
+                    <label class="block text-gray-700 font-bold text-lg">رقم الجوال</label>
+                    <input type="tel" id="phoneNumber" 
+                        class="w-full h-14 px-6 text-lg rounded-2xl border-2 border-gray-200 input-animation focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                        placeholder="05xxxxxxxx"
+                        maxlength="10">
+                </div>
+
+                <button onclick="submitForm()" id="submitBtn"
+                    class="w-full h-14 bg-gradient-to-r from-purple-600 to-pink-600 text-white text-lg font-bold rounded-2xl button-animation">
+                    تسجيل الحضور
+                </button>
+            </div>
+
+            <!-- حالة التسجيل -->
+            <div id="statusContainer" class="hidden space-y-6">
+                <div id="animationContainer" class="w-64 h-64 mx-auto"></div>
+                <div id="statusMessage" class="text-center p-6 rounded-2xl font-bold text-xl"></div>
+                <div id="qrCodeContainer" class="hidden text-center space-y-4">
+                    <div class="bg-white p-6 rounded-2xl shadow-lg inline-block success-animation">
+                        <canvas id="qrCode"></canvas>
+                    </div>
+                    <p class="text-gray-600">احتفظ بهذا الباركود لتأكيد حضورك</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuQ-Icok0gl5C31ElazN9RrZz99vJ79LQ",
+            authDomain: "dfhdsds-514ec.firebaseapp.com",
+            projectId: "dfhdsds-514ec",
+            storageBucket: "dfhdsds-514ec.firebasestorage.app",
+            messagingSenderId: "972581116542",
+            appId: "1:972581116542:web:c1906d0d75dffc5fb4562f",
+            measurementId: "G-79499LG545"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        const db = firebase.firestore();
+
+        // تحميل الرسوم المتحركة
+        const animations = {
+            success: "https://assets10.lottiefiles.com/packages/lf20_rc5d0f61.json",
+            error: "https://assets10.lottiefiles.com/packages/lf20_ph0kiizw.json",
+            pending: "https://assets10.lottiefiles.com/packages/lf20_q6ylat2o.json"
+        };
+
+        let currentAnimation = null;
+
+        function playAnimation(type) {
+            if (currentAnimation) {
+                currentAnimation.destroy();
+            }
+
+            const container = document.getElementById('animationContainer');
+            container.innerHTML = '';
+
+            currentAnimation = lottie.loadAnimation({
+                container: container,
+                renderer: 'svg',
+                loop: type === 'pending',
+                autoplay: true,
+                path: animations[type]
+            });
+        }
+
+        async function submitForm() {
+            const submitBtn = document.getElementById('submitBtn');
+            const fullName = document.getElementById('fullName').value.trim();
+            const phoneNumber = document.getElementById('phoneNumber').value.trim();
+
+            if (!fullName || !phoneNumber) {
+                showStatus('الرجاء إدخال جميع المعلومات المطلوبة', 'error');
+                return;
+            }
+
+            if (!/^05\d{8}$/.test(phoneNumber)) {
+                showStatus('الرجاء إدخال رقم جوال صحيح يبدأ بـ 05', 'error');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="inline-block animate-spin mr-2">⏳</span> جاري التسجيل...';
+
+            try {
+                const snapshot = await db.collection('invitations')
+                    .where('phoneNumber', '==', phoneNumber)
+                    .get();
+
+                if (!snapshot.empty) {
+                    handleExistingInvitation(snapshot.docs[0].data());
+                } else {
+                    const newInvitation = {
+                        fullName: fullName,
+                        phoneNumber: phoneNumber,
+                        status: 'pending',
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                        qrCode: 'INV-' + Date.now(),
+                        used: false
+                    };
+
+                    await db.collection('invitations').add(newInvitation);
+                    document.getElementById('registrationForm').style.display = 'none';
+                    showStatus('تم تسجيل طلبك بنجاح! في انتظار الموافقة', 'pending');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showStatus('حدث خطأ في التسجيل. الرجاء المحاولة مرة أخرى.', 'error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = 'تسجيل الحضور';
+            }
+        }
+
+        function handleExistingInvitation(invitation) {
+            const form = document.getElementById('registrationForm');
+            const statusContainer = document.getElementById('statusContainer');
+            const statusMessage = document.getElementById('statusMessage');
+            const qrCodeContainer = document.getElementById('qrCodeContainer');
+
+            form.style.display = 'none';
+            statusContainer.classList.remove('hidden');
+
+            switch(invitation.status) {
+                case 'accepted':
+                    statusMessage.innerHTML = 'تمت الموافقة على دعوتك!';
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-green-800';
+                    playAnimation('success');
+                    generateQRCode(invitation.qrCode);
+                    break;
+                case 'rejected':
+                    statusMessage.innerHTML = 'عذراً، تم رفض الطلب';
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-red-800';
+                    playAnimation('error');
+                    qrCodeContainer.classList.add('hidden');
+                    break;
+                case 'pending':
+                    statusMessage.innerHTML = 'طلبك قيد المراجعة';
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-yellow-800';
+                    playAnimation('pending');
+                    qrCodeContainer.classList.add('hidden');
+                    break;
+            }
+        }
+
+        function showStatus(message, type) {
+            const statusContainer = document.getElementById('statusContainer');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusContainer.classList.remove('hidden');
+            statusMessage.innerHTML = message;
+            
+            switch(type) {
+                case 'success':
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-green-800';
+                    playAnimation('success');
+                    break;
+                case 'error':
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-red-800';
+                    playAnimation('error');
+                    break;
+                case 'pending':
+                    statusMessage.className = 'text-center p-6 rounded-2xl font-bold text-xl text-yellow-800';
+                    playAnimation('pending');
+                    break;
+            }
+        }
+
+        function generateQRCode(data) {
+            const qrCodeContainer = document.getElementById('qrCodeContainer');
+            qrCodeContainer.classList.remove('hidden');
+            QRCode.toCanvas(document.getElementById('qrCode'), data, {
+                width: 200,
+                margin: 2
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,2422 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>دعوات | منصة المناسبات العصرية</title>
+    
+    <!-- CSS Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- QR Code & Map Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    
+    <!-- Leaflet Map (Open Source Alternative) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --secondary: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --wedding: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            --business: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --party: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            --conference: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            --graduation: linear-gradient(135deg, #ffd89b 0%, #19547b 100%);
+            --birthday: linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%);
+            --religious: linear-gradient(135deg, #c3cfe2 0%, #c3cfe2 100%);
+            --success: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            --warning: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            --error: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            --glass: rgba(255, 255, 255, 0.1);
+            --glass-dark: rgba(0, 0, 0, 0.1);
+            --shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            --shadow-xl: 0 35px 60px -12px rgba(0, 0, 0, 0.4);
+        }
+
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #667eea 100%);
+            background-size: 400% 400%;
+            animation: gradientFlow 20s ease infinite;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientFlow {
+            0%, 100% { background-position: 0% 50%; }
+            25% { background-position: 100% 50%; }
+            50% { background-position: 50% 100%; }
+            75% { background-position: 50% 0%; }
+        }
+
+        /* Next-Gen Glass Morphism */
+        .glass-ultra {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 32px;
+            box-shadow: 
+                0 25px 45px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-ultra::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.8s;
+        }
+
+        .glass-ultra:hover::before {
+            left: 100%;
+        }
+
+        .glass-ultra:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 
+                0 35px 65px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        /* Revolutionary Button Design */
+        .btn-next-gen {
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 25px;
+            padding: 1.5rem 2.5rem;
+            font-weight: 700;
+            font-size: 1.1rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 
+                0 15px 35px rgba(102, 126, 234, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            min-height: 65px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.75rem;
+            width: 100%;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-next-gen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transition: left 0.6s;
+        }
+
+        .btn-next-gen:hover::before {
+            left: 100%;
+        }
+
+        .btn-next-gen:hover {
+            transform: translateY(-5px) scale(1.05);
+            box-shadow: 
+                0 25px 50px rgba(102, 126, 234, 0.4),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-next-gen:active {
+            transform: translateY(-3px) scale(1.02);
+        }
+
+        /* Event Type Variants */
+        .btn-wedding { background: var(--wedding); }
+        .btn-business { background: var(--business); }
+        .btn-party { background: var(--party); }
+        .btn-conference { background: var(--conference); }
+        .btn-graduation { background: var(--graduation); }
+        .btn-birthday { background: var(--birthday); }
+        .btn-religious { background: var(--religious); }
+
+        /* Status Variants */
+        .btn-pending {
+            background: var(--warning);
+            box-shadow: 0 15px 35px rgba(245, 158, 11, 0.3);
+        }
+
+        .btn-accepted {
+            background: var(--success);
+            box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3);
+        }
+
+        .btn-rejected {
+            background: var(--error);
+            box-shadow: 0 15px 35px rgba(239, 68, 68, 0.3);
+        }
+
+        /* Ultra Modern Event Cards */
+        .event-card-ultra {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 32px;
+            overflow: hidden;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            transition: all 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .event-card-ultra::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            transform: translateX(-100%);
+            transition: transform 0.8s;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .event-card-ultra:hover::before {
+            transform: translateX(100%);
+        }
+
+        .event-card-ultra:hover {
+            transform: translateY(-15px) scale(1.03);
+            box-shadow: 
+                0 40px 80px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+        }
+
+        /* Futuristic Modal Design */
+        .modal-next-gen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(20px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 1rem;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-next-gen.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content-ultra {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            backdrop-filter: blur(30px);
+            border-radius: 40px;
+            width: 100%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 
+                0 50px 100px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            position: relative;
+            transform: scale(0.8) translateY(50px) rotateX(10deg);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .modal-next-gen.show .modal-content-ultra {
+            transform: scale(1) translateY(0) rotateX(0deg);
+        }
+
+        /* Enhanced Navigation */
+        .nav-next-gen {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(30px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            padding: 1.5rem 2rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Ultra Form Inputs */
+        .input-next-gen {
+            background: rgba(255, 255, 255, 0.9);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 20px;
+            padding: 1.5rem 2rem;
+            font-size: 16px;
+            font-weight: 500;
+            width: 100%;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            backdrop-filter: blur(15px);
+            box-shadow: 
+                0 10px 25px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        .input-next-gen:focus {
+            outline: none;
+            border-color: rgba(102, 126, 234, 0.8);
+            box-shadow: 
+                0 0 0 4px rgba(102, 126, 234, 0.1),
+                0 15px 35px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
+            transform: scale(1.02);
+        }
+
+        /* Next-Gen Status Badges */
+        .status-badge-ultra {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.75px;
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+
+        .status-pending-ultra {
+            background: var(--warning);
+            color: white;
+        }
+
+        .status-accepted-ultra {
+            background: var(--success);
+            color: white;
+        }
+
+        .status-rejected-ultra {
+            background: var(--error);
+            color: white;
+        }
+
+        /* Enhanced QR Container */
+        .qr-container-ultra {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 28px;
+            padding: 2.5rem;
+            text-align: center;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.1),
+                inset 0 2px 10px rgba(0, 0, 0, 0.05);
+            border: 2px solid rgba(102, 126, 234, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .qr-container-ultra::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(102, 126, 234, 0.05) 0%, transparent 70%);
+            animation: rotate 20s linear infinite;
+        }
+
+        /* Enhanced Map Container */
+        .map-container {
+            background: linear-gradient(145deg, #ffffff, #f8fafc);
+            border-radius: 24px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            box-shadow: 
+                0 20px 40px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(102, 126, 234, 0.1);
+        }
+
+        .map-frame {
+            width: 100%;
+            height: 250px;
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        /* Leaflet Map Styling */
+        .leaflet-container {
+            height: 250px;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Location Button Styling */
+        .location-buttons {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .location-btn {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            border-radius: 16px;
+            padding: 1rem 1.5rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .location-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 30px rgba(102, 126, 234, 0.4);
+        }
+
+        /* Event Type Cards */
+        .event-type-wedding {
+            background: var(--wedding);
+        }
+
+        .event-type-business {
+            background: var(--business);
+        }
+
+        .event-type-party {
+            background: var(--party);
+        }
+
+        .event-type-conference {
+            background: var(--conference);
+        }
+
+        .event-type-graduation {
+            background: var(--graduation);
+        }
+
+        .event-type-birthday {
+            background: var(--birthday);
+        }
+
+        .event-type-religious {
+            background: var(--religious);
+        }
+
+        /* Floating animations */
+        .floating-ultra {
+            animation: floatUltra 8s ease-in-out infinite;
+        }
+
+        @keyframes floatUltra {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(1deg); }
+            50% { transform: translateY(-10px) rotate(-1deg); }
+            75% { transform: translateY(-15px) rotate(0.5deg); }
+        }
+
+        /* Enhanced Loading */
+        .loader-next-gen {
+            width: 60px;
+            height: 60px;
+            border: 6px solid rgba(102, 126, 234, 0.2);
+            border-top: 6px solid rgba(102, 126, 234, 1);
+            border-radius: 50%;
+            animation: spinUltra 1.5s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+            position: relative;
+        }
+
+        .loader-next-gen::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: -6px;
+            right: -6px;
+            bottom: -6px;
+            border: 6px solid rgba(245, 158, 11, 0.2);
+            border-bottom: 6px solid rgba(245, 158, 11, 1);
+            border-radius: 50%;
+            animation: spinUltraReverse 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+        }
+
+        @keyframes spinUltra {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes spinUltraReverse {
+            0% { transform: rotate(360deg); }
+            100% { transform: rotate(0deg); }
+        }
+
+        /* Toast notifications */
+        .toast-next-gen {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            left: 2rem;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(255, 255, 255, 0.85));
+            backdrop-filter: blur(25px);
+            border-radius: 24px;
+            padding: 1.5rem 2rem;
+            box-shadow: 
+                0 25px 50px rgba(0, 0, 0, 0.15),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            z-index: 10000;
+            transform: translateY(-100px) scale(0.8);
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @media (min-width: 640px) {
+            .toast-next-gen {
+                left: auto;
+                width: 450px;
+            }
+        }
+
+        .toast-next-gen.show {
+            transform: translateY(0) scale(1);
+        }
+
+        /* Responsive grid */
+        .grid-next-gen {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .grid-next-gen {
+                grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            }
+        }
+
+        /* Hero section */
+        .hero-next-gen {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(25px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 40px;
+            padding: 4rem 2rem;
+            text-align: center;
+            margin: 2rem 0;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 35px 70px rgba(0, 0, 0, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.3);
+        }
+
+        .hero-next-gen::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: rotate 25s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Close button */
+        .close-btn-ultra {
+            position: absolute;
+            top: 1.5rem;
+            left: 1.5rem;
+            width: 48px;
+            height: 48px;
+            background: rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+        }
+
+        .close-btn-ultra:hover {
+            background: rgba(239, 68, 68, 0.1);
+            border-color: rgba(239, 68, 68, 0.3);
+            transform: scale(1.1) rotate(90deg);
+        }
+
+        /* Event message styling */
+        .event-message {
+            font-family: 'Amiri', serif;
+            line-height: 1.8;
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.8), rgba(255, 255, 255, 0.6));
+            border-radius: 24px;
+            margin: 1.5rem 0;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            box-shadow: 
+                0 15px 35px rgba(0, 0, 0, 0.05),
+                inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.8), rgba(139, 92, 246, 0.8));
+            border-radius: 5px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 1), rgba(139, 92, 246, 1));
+        }
+
+        /* Animation classes */
+        .fade-in-ultra {
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeInUltra 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeInUltra {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .scale-in-ultra {
+            opacity: 0;
+            transform: scale(0.8);
+            animation: scaleInUltra 0.6s ease-out forwards;
+        }
+
+        @keyframes scaleInUltra {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 640px) {
+            .hero-next-gen {
+                padding: 2.5rem 1.5rem;
+                margin: 1rem 0;
+                border-radius: 28px;
+            }
+            
+            .btn-next-gen {
+                padding: 1.25rem 2rem;
+                font-size: 1rem;
+            }
+            
+            .modal-content-ultra {
+                margin: 0.5rem;
+                border-radius: 28px;
+                max-height: 95vh;
+            }
+
+            .nav-next-gen {
+                padding: 1rem 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Next-Gen Navigation -->
+    <nav class="nav-next-gen">
+        <div class="flex justify-between items-center max-w-7xl mx-auto">
+            <div class="flex items-center gap-4">
+                <div class="w-14 h-14 rounded-full bg-gradient-to-r from-purple-500 to-pink-500 flex items-center justify-center floating-ultra">
+                    <i class="fas fa-calendar-star text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white">دعوات</h1>
+                    <p class="text-xs text-white/80">منصة المناسبات العصرية</p>
+                </div>
+            </div>
+            <button onclick="checkMyInvitations()" class="glass-ultra px-6 py-3 text-white font-bold hover:scale-105 transition-transform">
+                <i class="fas fa-user ml-2"></i>
+                دعواتي
+            </button>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="pt-28 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="hero-next-gen fade-in-ultra">
+                <div class="relative z-10">
+                    <h2 class="text-5xl md:text-7xl font-black text-white mb-8 leading-tight">
+                        مناسبات
+                        <span class="block bg-gradient-to-r from-yellow-300 via-pink-300 to-purple-300 bg-clip-text text-transparent">
+                            استثنائية
+                        </span>
+                    </h2>
+                    <p class="text-xl md:text-2xl text-white/90 max-w-3xl mx-auto mb-10 leading-relaxed">
+                        انضم إلى أجمل التجارب والفعاليات المميزة في عالم رقمي متطور
+                    </p>
+                    <div class="flex flex-wrap justify-center gap-6">
+                        <div class="glass-ultra px-8 py-4 rounded-full text-white font-bold floating-ultra" style="animation-delay: 0s;">
+                            ✨ تجارب فريدة
+                        </div>
+                        <div class="glass-ultra px-8 py-4 rounded-full text-white font-bold floating-ultra" style="animation-delay: 1s;">
+                            🗺️ خرائط تفاعلية
+                        </div>
+                        <div class="glass-ultra px-8 py-4 rounded-full text-white font-bold floating-ultra" style="animation-delay: 2s;">
+                            📱 باركود ذكي
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Events Section -->
+    <section class="px-4 py-12">
+        <div class="max-w-7xl mx-auto">
+            <div class="text-center mb-16 fade-in-ultra">
+                <h3 class="text-4xl md:text-5xl font-bold text-white mb-6">
+                    <i class="fas fa-calendar-alt ml-4"></i>
+                    المناسبات المتاحة
+                </h3>
+                <p class="text-xl text-white/80">اكتشف أحدث الفعاليات والمناسبات المميزة</p>
+            </div>
+
+            <!-- Events Grid -->
+            <div id="eventsGrid" class="grid-next-gen">
+                <!-- Loading State -->
+                <div class="col-span-full flex justify-center py-20">
+                    <div class="text-center text-white">
+                        <div class="loader-next-gen mx-auto mb-8"></div>
+                        <h4 class="text-3xl font-bold mb-4">جاري التحميل</h4>
+                        <p class="text-white/70 text-lg">يرجى الانتظار...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Modal Container -->
+    <div id="modalContainer"></div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuQ-Icok0gl5C31ElazN9RrZz99vJ79LQ",
+            authDomain: "dfhdsds-514ec.firebaseapp.com",
+            projectId: "dfhdsds-514ec",
+            storageBucket: "dfhdsds-514ec.firebasestorage.app",
+            messagingSenderId: "972581116542",
+            appId: "1:972581116542:web:c1906d0d75dffc5fb4562f",
+            measurementId: "G-79499LG545"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        let allEvents = [];
+        let userPhone = localStorage.getItem('userPhone') || '';
+
+        // Event type messages
+        const eventMessages = {
+            'wedding': {
+                title: '✨ دعوتكم على الحب والفرح ✨',
+                message: `بكل حب وسعادة نشارككم أجمل لحظات حياتنا
+في يوم يجمعنا تحت سماء واحدة وقلوب مليانة فرح ❤️
+
+يسعدنا حضوركم حفل زفافنا
+{groom} & {bride}
+
+لا تنسوا تجيبوا معاكم ابتسامتكم، وخلونا نحتفل سوا 🎉`,
+                icon: '💒',
+                gradient: 'event-type-wedding'
+            },
+            'birthday': {
+                title: '🎂 احتفال عيد ميلاد مميز 🎂',
+                message: `كل عام وأنتم بخير! 🎉
+نتشرف بحضوركم للاحتفال معنا في هذا اليوم المميز
+
+احضروا الفرحة والهدايا
+وخلونا نحتفل مع بعض! 🎈`,
+                icon: '🎂',
+                gradient: 'event-type-birthday'
+            },
+            'business': {
+                title: '💼 مناسبة عمل مهمة 💼',
+                message: `يسعدنا دعوتكم لحضور هذه المناسبة المهنية المميزة
+حيث سنناقش آخر التطورات والفرص الجديدة
+
+حضوركم يهمنا ويثري الفعالية 📈`,
+                icon: '💼',
+                gradient: 'event-type-business'
+            },
+            'graduation': {
+                title: '🎓 حفل تخرج مميز 🎓',
+                message: `بعد سنوات من الجد والاجتهاد
+نتشرف بحضوركم حفل التخرج
+
+شاركونا فرحة الإنجاز والنجاح! 🌟`,
+                icon: '🎓',
+                gradient: 'event-type-graduation'
+            },
+            'party': {
+                title: '🎊 حفلة رائعة 🎊',
+                message: `استعدوا لحفلة لا تُنسى!
+موسيقى، رقص، ومرح بلا حدود
+
+احضروا الطاقة الإيجابية وخلونا نستمتع! 🕺💃`,
+                icon: '🎊',
+                gradient: 'event-type-party'
+            },
+            'conference': {
+                title: '📋 مؤتمر مهني 📋',
+                message: `نتشرف بحضوركم مؤتمرنا السنوي
+حيث سنناقش أحدث الابتكارات والتطورات
+
+كونوا جزءاً من هذا الحدث المميز 🚀`,
+                icon: '📋',
+                gradient: 'event-type-conference'
+            },
+            'religious': {
+                title: '🕌 مناسبة دينية مباركة 🕌',
+                message: `بارك الله فيكم وتقبل منا ومنكم
+نتشرف بحضوركم هذه المناسبة المباركة
+
+جعله الله في ميزان حسناتكم 🤲`,
+                icon: '🕌',
+                gradient: 'event-type-religious'
+            }
+        };
+
+        // Next-Gen Toast Notification
+        function showToast(message, type = 'info') {
+            const existingToast = document.querySelector('.toast-next-gen');
+            if (existingToast) existingToast.remove();
+
+            const iconMap = {
+                success: { icon: 'fa-check-circle', color: 'text-green-600' },
+                error: { icon: 'fa-exclamation-triangle', color: 'text-red-600' },
+                info: { icon: 'fa-info-circle', color: 'text-blue-600' },
+                warning: { icon: 'fa-exclamation-circle', color: 'text-yellow-600' }
+            };
+
+            const config = iconMap[type] || iconMap.info;
+
+            const toast = document.createElement('div');
+            toast.className = 'toast-next-gen';
+            toast.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-14 h-14 rounded-full bg-gradient-to-r from-purple-100 to-blue-100 flex items-center justify-center">
+                        <i class="fas ${config.icon} ${config.color} text-xl"></i>
+                    </div>
+                    <div class="flex-1">
+                        <p class="font-bold text-gray-800 text-lg">${message}</p>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            setTimeout(() => toast.classList.add('show'), 100);
+            setTimeout(() => {
+                toast.classList.remove('show');
+                setTimeout(() => toast.remove(), 500);
+            }, 4000);
+        }
+
+        // Create Next-Gen Modal
+        function createModal(content) {
+            const modal = document.createElement('div');
+            modal.className = 'modal-next-gen';
+            modal.innerHTML = `
+                <div class="modal-content-ultra">
+                    <button onclick="closeModal()" class="close-btn-ultra">
+                        <i class="fas fa-times text-gray-600 text-lg"></i>
+                    </button>
+                    ${content}
+                </div>
+            `;
+            
+            document.getElementById('modalContainer').appendChild(modal);
+            
+            setTimeout(() => modal.classList.add('show'), 10);
+            
+            return modal;
+        }
+
+        // Close Modal
+        function closeModal() {
+            const modal = document.querySelector('.modal-next-gen');
+            if (modal) {
+                modal.classList.remove('show');
+                setTimeout(() => modal.remove(), 500);
+            }
+        }
+
+        // Get event type from title/description
+        function detectEventType(title, description) {
+            const text = (title + ' ' + description).toLowerCase();
+            
+            if (text.includes('زواج') || text.includes('زفاف') || text.includes('عرس')) return 'wedding';
+            if (text.includes('عيد ميلاد') || text.includes('مولد')) return 'birthday';
+            if (text.includes('عمل') || text.includes('شركة') || text.includes('مهني')) return 'business';
+            if (text.includes('تخرج') || text.includes('دراسة')) return 'graduation';
+            if (text.includes('حفلة') || text.includes('رقص')) return 'party';
+            if (text.includes('مؤتمر') || text.includes('ندوة')) return 'conference';
+            if (text.includes('ديني') || text.includes('إسلام') || text.includes('دعاء')) return 'religious';
+            
+            return 'business'; // Default
+        }
+
+        // Generate event message
+        function generateEventMessage(eventType, event, groom = '', bride = '') {
+            const template = eventMessages[eventType] || eventMessages.business;
+            let message = template.message;
+            
+            message = message.replace('{groom}', groom);
+            message = message.replace('{bride}', bride);
+            message = message.replace('{title}', event.title);
+            message = message.replace('{date}', new Date(event.dateObject).toLocaleDateString('ar-SA'));
+            message = message.replace('{location}', event.location);
+            
+            return {
+                title: template.title,
+                message: message,
+                icon: template.icon,
+                gradient: template.gradient
+            };
+        }
+
+        // Create Interactive Map without API
+        function createInteractiveMap(location, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            try {
+                // Clear container
+                container.innerHTML = '';
+
+                // Create map div
+                const mapDiv = document.createElement('div');
+                mapDiv.id = `map-${Date.now()}`;
+                mapDiv.style.height = '250px';
+                mapDiv.style.borderRadius = '16px';
+                container.appendChild(mapDiv);
+
+                // Initialize Leaflet map
+                const map = L.map(mapDiv).setView([24.7136, 46.6753], 10); // Default to Riyadh
+
+                // Add OpenStreetMap tiles (free)
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                    attribution: '© OpenStreetMap contributors'
+                }).addTo(map);
+
+                // Try to geocode the location using a simple approach
+                geocodeLocation(location).then(coords => {
+                    if (coords) {
+                        map.setView([coords.lat, coords.lng], 15);
+                        
+                        // Add custom marker
+                        const marker = L.marker([coords.lat, coords.lng]).addTo(map);
+                        marker.bindPopup(`<strong>${location}</strong>`).openPopup();
+                    }
+                });
+
+                console.log('Interactive map created successfully');
+            } catch (error) {
+                console.error('Error creating map:', error);
+                createFallbackMap(location, containerId);
+            }
+        }
+
+        // Simple geocoding function (free alternative)
+        async function geocodeLocation(location) {
+            try {
+                // Use Nominatim (OpenStreetMap's geocoding service) - free
+                const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(location)}&limit=1`);
+                const data = await response.json();
+                
+                if (data && data.length > 0) {
+                    return {
+                        lat: parseFloat(data[0].lat),
+                        lng: parseFloat(data[0].lon)
+                    };
+                }
+            } catch (error) {
+                console.error('Geocoding error:', error);
+            }
+            
+            // Fallback to Saudi Arabia major cities
+            const saudiCities = {
+                'الرياض': { lat: 24.7136, lng: 46.6753 },
+                'جدة': { lat: 21.4858, lng: 39.1925 },
+                'مكة': { lat: 21.4225, lng: 39.8262 },
+                'المدينة': { lat: 24.5247, lng: 39.5692 },
+                'الدمام': { lat: 26.4207, lng: 50.0888 },
+                'تبوك': { lat: 28.3998, lng: 36.5664 },
+                'بريدة': { lat: 26.3260, lng: 43.9750 },
+                'خميس مشيط': { lat: 18.3061, lng: 42.7321 },
+                'الهفوف': { lat: 25.3776, lng: 49.5859 },
+                'حفر الباطن': { lat: 28.4267, lng: 45.9761 }
+            };
+
+            for (const [city, coords] of Object.entries(saudiCities)) {
+                if (location.includes(city)) {
+                    return coords;
+                }
+            }
+
+            return { lat: 24.7136, lng: 46.6753 }; // Default to Riyadh
+        }
+
+        // Fallback map for when Leaflet fails
+        function createFallbackMap(location, containerId) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            container.innerHTML = `
+                <div class="fallback-map bg-gradient-to-br from-blue-50 to-green-50 p-8 rounded-2xl text-center">
+                    <div class="text-5xl mb-4">🗺️</div>
+                    <h4 class="font-bold text-xl text-gray-800 mb-4">موقع المناسبة</h4>
+                    <p class="text-gray-600 font-medium mb-6">${location}</p>
+                    
+                    <div class="location-buttons">
+                        <button onclick="openGoogleMaps('${location}')" class="location-btn">
+                            <i class="fas fa-map-marked-alt ml-2"></i>
+                            فتح في خرائط جوجل
+                        </button>
+                        <button onclick="openAppleMaps('${location}')" class="location-btn">
+                            <i class="fas fa-map ml-2"></i>
+                            فتح في خرائط آبل
+                        </button>
+                        <button onclick="openWaze('${location}')" class="location-btn">
+                            <i class="fas fa-route ml-2"></i>
+                            فتح في Waze
+                        </button>
+                        <button onclick="copyLocation('${location}')" class="location-btn">
+                            <i class="fas fa-copy ml-2"></i>
+                            نسخ العنوان
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Open different map applications
+        function openGoogleMaps(location) {
+            const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location)}`;
+            window.open(url, '_blank');
+        }
+
+        function openAppleMaps(location) {
+            const url = `https://maps.apple.com/?q=${encodeURIComponent(location)}`;
+            window.open(url, '_blank');
+        }
+
+        function openWaze(location) {
+            const url = `https://waze.com/ul?q=${encodeURIComponent(location)}`;
+            window.open(url, '_blank');
+        }
+
+        function copyLocation(location) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(location).then(() => {
+                    showToast('تم نسخ العنوان بنجاح! 📋', 'success');
+                }).catch(() => {
+                    showToast('فشل في نسخ العنوان', 'error');
+                });
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = location;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('تم نسخ العنوان بنجاح! 📋', 'success');
+                } catch (err) {
+                    showToast('فشل في نسخ العنوان', 'error');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Load Events
+        async function loadEvents() {
+            try {
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                const snapshot = await db.collection('events')
+                    .orderBy('date', 'asc')
+                    .get();
+
+                if (snapshot.empty) {
+                    document.getElementById('eventsGrid').innerHTML = `
+                        <div class="col-span-full text-center py-24">
+                            <div class="glass-ultra p-16 rounded-3xl scale-in-ultra">
+                                <div class="text-9xl mb-8">🎪</div>
+                                <h3 class="text-4xl font-bold text-white mb-6">لا توجد مناسبات متاحة</h3>
+                                <p class="text-white/70 text-xl">ستكون أول من يعلم عندما تتوفر مناسبات جديدة!</p>
+                            </div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                allEvents = [];
+                snapshot.forEach(doc => {
+                    const event = doc.data();
+                    let eventDate;
+                    
+                    if (event.date instanceof firebase.firestore.Timestamp) {
+                        eventDate = event.date.toDate();
+                    } else if (typeof event.date === 'string') {
+                        eventDate = new Date(event.date);
+                    } else {
+                        eventDate = new Date(event.date.seconds * 1000);
+                    }
+
+                    if (eventDate >= today) {
+                        allEvents.push({
+                            id: doc.id,
+                            ...event,
+                            dateObject: eventDate
+                        });
+                    }
+                });
+
+                await displayEvents(allEvents);
+
+            } catch (error) {
+                console.error("Error loading events:", error);
+                document.getElementById('eventsGrid').innerHTML = `
+                    <div class="col-span-full text-center py-24">
+                        <div class="glass-ultra p-16 rounded-3xl">
+                            <div class="text-9xl mb-8">❌</div>
+                            <h3 class="text-4xl font-bold text-red-300 mb-6">حدث خطأ في التحميل</h3>
+                            <button onclick="loadEvents()" class="btn-next-gen mt-6">
+                                <i class="fas fa-redo"></i>
+                                إعادة المحاولة
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Display Events
+        async function displayEvents(events) {
+            const eventsGrid = document.getElementById('eventsGrid');
+            
+            if (events.length === 0) {
+                eventsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-24">
+                        <div class="glass-ultra p-16 rounded-3xl">
+                            <div class="text-9xl mb-8">🔍</div>
+                            <h3 class="text-4xl font-bold text-white mb-6">لا توجد مناسبات</h3>
+                            <p class="text-white/70 text-xl">جرب البحث مرة أخرى</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            // Get user's invitations
+            const userInvitations = {};
+            if (userPhone) {
+                try {
+                    const invitationsSnapshot = await db.collection('invitations')
+                        .where('phoneNumber', '==', userPhone)
+                        .get();
+                    
+                    invitationsSnapshot.docs.forEach(doc => {
+                        const invitation = doc.data();
+                        userInvitations[invitation.eventId] = invitation;
+                    });
+                } catch (error) {
+                    console.error('Error loading user invitations:', error);
+                }
+            }
+
+            const eventsHTML = events.map((event, index) => {
+                const userInvitation = userInvitations[event.id];
+                const registrationStatus = userInvitation ? userInvitation.status : null;
+                const eventDate = new Date(event.dateObject);
+                const timeUntil = getTimeUntilEvent(eventDate);
+                const isToday = isEventToday(eventDate);
+                const eventType = detectEventType(event.title, event.description);
+                const eventTypeClass = `event-type-${eventType}`;
+                
+                return `
+                    <div class="event-card-ultra fade-in-ultra ${registrationStatus === 'accepted' ? 'cursor-pointer' : ''}" 
+                         style="animation-delay: ${index * 0.15}s"
+                         ${registrationStatus === 'accepted' ? `onclick="showInvitationDetails('${event.id}')"` : ''}>
+                        
+                        <!-- Event Image with Gradient Overlay -->
+                        <div class="relative overflow-hidden h-64">
+                            <img src="${event.image || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'}" 
+                                class="w-full h-full object-cover transition-transform duration-700 hover:scale-110" 
+                                alt="${event.title}"
+                                onerror="this.src='https://images.unsplash.com/photo-1540575467063-178a50c2df87?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'">
+                            
+                            <!-- Dynamic Gradient based on event type -->
+                            <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent"></div>
+                            <div class="absolute inset-0 ${eventTypeClass} opacity-20"></div>
+                            
+                            <!-- Event Type Badge -->
+                            <div class="absolute top-4 right-4">
+                                <div class="glass-ultra px-4 py-2 rounded-full text-white font-bold text-sm">
+                                    <span class="text-lg ml-1">${eventMessages[eventType]?.icon || '📅'}</span>
+                                    ${eventDate.toLocaleDateString('ar-SA')}
+                                </div>
+                            </div>
+                            
+                            <!-- Today Badge -->
+                            ${isToday ? `
+                                <div class="absolute top-4 left-4">
+                                    <div class="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-bold shadow-lg animate-pulse">
+                                        🔥 اليوم
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Status Overlay -->
+                            ${registrationStatus ? `
+                                <div class="absolute inset-0 bg-black/60 flex items-center justify-center">
+                                    <div class="status-badge-ultra status-${registrationStatus}-ultra">
+                                        <i class="fas ${registrationStatus === 'pending' ? 'fa-hourglass-half' : 
+                                                        registrationStatus === 'accepted' ? 'fa-check-circle' : 'fa-times-circle'} text-xl"></i>
+                                        ${getStatusText(registrationStatus)}
+                                    </div>
+                                </div>
+                            ` : ''}
+                            
+                            <!-- Time Badge -->
+                            <div class="absolute bottom-4 right-4">
+                                <div class="glass-ultra px-4 py-2 rounded-full text-white text-sm font-bold">
+                                    <i class="fas fa-clock ml-1"></i>
+                                    ${timeUntil}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Event Content -->
+                        <div class="p-8">
+                            <h3 class="text-2xl md:text-3xl font-bold text-gray-800 mb-4 line-clamp-2">
+                                ${event.title || 'مناسبة بدون عنوان'}
+                            </h3>
+                            <p class="text-gray-600 mb-8 line-clamp-3 leading-relaxed text-lg">
+                                ${event.description || 'لا يوجد وصف متاح لهذه المناسبة'}
+                            </p>
+                            
+                            <!-- Event Details -->
+                            <div class="space-y-4 mb-8">
+                                <div class="flex items-center text-gray-600">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center ml-4">
+                                        <i class="fas fa-clock text-purple-600 text-lg"></i>
+                                    </div>
+                                    <div>
+                                        <div class="font-bold text-lg">${eventDate.toLocaleDateString('ar-SA')}</div>
+                                        <div class="text-sm opacity-70">${eventDate.toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center text-gray-600">
+                                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center ml-4">
+                                        <i class="fas fa-map-marker-alt text-red-600 text-lg"></i>
+                                    </div>
+                                    <span class="truncate font-medium">${event.location || 'الموقع غير محدد'}</span>
+                                </div>
+                            </div>
+                            
+                            <!-- Registration Button -->
+                            ${getRegistrationButton(event.id, registrationStatus, eventType)}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            eventsGrid.innerHTML = eventsHTML;
+        }
+
+        // Get Registration Button
+        function getRegistrationButton(eventId, status, eventType) {
+            const eventTypeClass = `btn-${eventType}`;
+            
+            if (!status) {
+                return `
+                    <button onclick="event.stopPropagation(); handleEventRegistration('${eventId}')" 
+                        class="btn-next-gen ${eventTypeClass}">
+                        <i class="fas fa-ticket-alt text-xl"></i>
+                        تسجيل الحضور
+                    </button>
+                `;
+            }
+
+            const buttonConfig = {
+                'pending': {
+                    class: 'btn-pending',
+                    icon: 'fa-hourglass-half',
+                    text: 'قيد الانتظار',
+                    onclick: `showInvitationDetails('${eventId}')`
+                },
+                'accepted': {
+                    class: 'btn-accepted',
+                    icon: 'fa-check-circle',
+                    text: 'مقبول - اضغط للتفاصيل',
+                    onclick: `showInvitationDetails('${eventId}')`
+                },
+                'rejected': {
+                    class: 'btn-rejected',
+                    icon: 'fa-times-circle',
+                    text: 'مرفوض',
+                    onclick: `handleReregistration('${eventId}')`
+                }
+            };
+
+            const config = buttonConfig[status];
+            const clickHandler = config.onclick ? `onclick="event.stopPropagation(); ${config.onclick}"` : '';
+
+            return `
+                <button ${clickHandler} class="btn-next-gen ${config.class}">
+                    <i class="fas ${config.icon} text-xl"></i>
+                    ${config.text}
+                </button>
+            `;
+        }
+
+        // Handle Re-registration for rejected invitations
+        function handleReregistration(eventId) {
+            Swal.fire({
+                title: 'إعادة التسجيل',
+                html: `
+                    <div class="text-center py-6">
+                        <div class="text-6xl mb-4">🔄</div>
+                        <p class="text-lg mb-4">هل تريد إعادة إرسال طلب الحضور؟</p>
+                        <p class="text-gray-600">سيتم إرسال طلب جديد للمراجعة</p>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: '✅ نعم، أعد الإرسال',
+                cancelButtonText: '❌ إلغاء',
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#ef4444',
+                customClass: {
+                    popup: 'rounded-3xl'
+                }
+                        }).then(async (result) => {
+                if (result.isConfirmed) {
+                    try {
+                        // Update status to pending
+                        const invitationSnapshot = await db.collection('invitations')
+                            .where('eventId', '==', eventId)
+                            .where('phoneNumber', '==', userPhone)
+                            .get();
+
+                        if (!invitationSnapshot.empty) {
+                            const docId = invitationSnapshot.docs[0].id;
+                            await db.collection('invitations').doc(docId).update({
+                                status: 'pending',
+                                updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+
+                            showToast('تم إعادة إرسال طلب الحضور بنجاح! 🔄', 'success');
+                            loadEvents();
+                        }
+                    } catch (error) {
+                        console.error('Error resubmitting invitation:', error);
+                        showToast('حدث خطأ في إعادة الإرسال', 'error');
+                    }
+                }
+            });
+        }
+
+        // Handle Event Registration
+        function handleEventRegistration(eventId) {
+            const event = allEvents.find(e => e.id === eventId);
+            if (!event) return;
+
+            const eventType = detectEventType(event.title, event.description);
+            const eventConfig = eventMessages[eventType] || eventMessages.business;
+
+            const modalContent = `
+                <div class="p-10">
+                    <div class="text-center mb-10 mt-8">
+                        <div class="w-24 h-24 rounded-full ${eventConfig.gradient} flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                            <span class="text-4xl">${eventConfig.icon}</span>
+                        </div>
+                        <h2 class="text-4xl font-bold text-gray-800 mb-4">تسجيل الحضور</h2>
+                        <p class="text-gray-600 text-lg">انضم إلى هذه المناسبة المميزة</p>
+                    </div>
+                    
+                    <!-- Event Info -->
+                    <div class="glass-ultra p-8 mb-10 rounded-3xl">
+                        <h3 class="font-bold text-purple-800 text-2xl mb-4 text-center">
+                            <span class="text-2xl ml-2">${eventConfig.icon}</span>
+                            ${event.title}
+                        </h3>
+                        <div class="grid grid-cols-1 gap-4 text-purple-700">
+                            <div class="flex items-center justify-center">
+                                <i class="fas fa-clock ml-3 text-xl"></i>
+                                <span class="text-lg">${event.dateObject.toLocaleDateString('ar-SA')} - ${event.dateObject.toLocaleTimeString('ar-SA', {hour: '2-digit', minute: '2-digit'})}</span>
+                            </div>
+                            <div class="flex items-center justify-center">
+                                <i class="fas fa-map-marker-alt ml-3 text-xl"></i>
+                                <span class="text-lg">${event.location}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Registration Form -->
+                    <form id="registrationForm" class="space-y-8">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-4">
+                                <i class="fas fa-user ml-2 text-purple-600"></i>
+                                الاسم الكامل
+                            </label>
+                            <input type="text" 
+                                id="fullName" 
+                                class="input-next-gen"
+                                placeholder="أدخل اسمك الكامل"
+                                required>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-4">
+                                <i class="fas fa-mobile-alt ml-2 text-blue-600"></i>
+                                رقم الجوال
+                            </label>
+                            <input type="tel" 
+                                id="phoneNumber" 
+                                class="input-next-gen"
+                                placeholder="05xxxxxxxx"
+                                maxlength="10"
+                                value="${userPhone}"
+                                required>
+                            <p class="text-sm text-gray-500 mt-3">يجب أن يبدأ برقم 05 ويتكون من 10 أرقام</p>
+                        </div>
+                        
+                        <div class="pt-6">
+                            <button type="submit" class="btn-next-gen ${eventConfig.gradient}">
+                                <i class="fas fa-check text-xl"></i>
+                                تأكيد التسجيل
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+
+            const modal = createModal(modalContent);
+
+            // Handle form submission
+            document.getElementById('registrationForm').addEventListener('submit', async (e) => {
+                e.preventDefault();
+                
+                const fullName = document.getElementById('fullName').value.trim();
+                const phoneNumber = document.getElementById('phoneNumber').value.trim();
+
+                // Validation
+                if (!fullName || fullName.length < 3) {
+                    showToast('الرجاء إدخال اسم صحيح (3 أحرف على الأقل)', 'error');
+                    return;
+                }
+
+                const phoneRegex = /^05[0-9]{8}$/;
+                if (!phoneRegex.test(phoneNumber)) {
+                    showToast('رقم الجوال غير صحيح، يجب أن يبدأ ب 05 ويتكون من 10 أرقام', 'error');
+                    return;
+                }
+
+                await processRegistration(eventId, { fullName, phoneNumber }, event.title, eventType);
+            });
+        }
+
+        // Process Registration
+        async function processRegistration(eventId, userData, eventTitle, eventType) {
+            try {
+                // Show loading
+                const submitBtn = document.querySelector('#registrationForm button[type="submit"]');
+                const originalHTML = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<div class="loader-next-gen mx-auto"></div>';
+                submitBtn.disabled = true;
+
+                // Check for existing registration
+                const existingReg = await db.collection('invitations')
+                    .where('eventId', '==', eventId)
+                    .where('phoneNumber', '==', userData.phoneNumber)
+                    .get();
+
+                if (!existingReg.empty) {
+                    const invitation = existingReg.docs[0].data();
+                    closeModal();
+                    setTimeout(() => showInvitationDetails(eventId, invitation), 500);
+                    return;
+                }
+
+                // Create QR Code data
+                const qrData = `invitation-${eventId}-${userData.phoneNumber}-${Date.now()}`;
+                
+                // Add new registration
+                await db.collection('invitations').add({
+                    eventId,
+                    eventTitle,
+                    eventType,
+                    fullName: userData.fullName,
+                    phoneNumber: userData.phoneNumber,
+                    status: 'pending',
+                    qrCode: qrData,
+                    qrEnabled: true,
+                    maxScans: 1,
+                    scanCount: 0,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    createdAt: new Date().toISOString()
+                });
+
+                // Save user phone
+                localStorage.setItem('userPhone', userData.phoneNumber);
+                userPhone = userData.phoneNumber;
+
+                closeModal();
+                setTimeout(() => {
+                    showSuccessMessage(userData.fullName, eventType);
+                    loadEvents();
+                }, 500);
+
+            } catch (error) {
+                console.error('Registration error:', error);
+                showToast('حدث خطأ أثناء التسجيل، يرجى المحاولة مرة أخرى', 'error');
+                
+                // Reset button
+                const submitBtn = document.querySelector('#registrationForm button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.innerHTML = '<i class="fas fa-check text-xl"></i> تأكيد التسجيل';
+                    submitBtn.disabled = false;
+                }
+            }
+        }
+
+        // Show Success Message with Event Type Styling
+        function showSuccessMessage(userName, eventType) {
+            const eventConfig = eventMessages[eventType] || eventMessages.business;
+            
+            const modalContent = `
+                <div class="p-10 text-center">
+                    <div class="w-28 h-28 rounded-full ${eventConfig.gradient} flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                        <span class="text-5xl">${eventConfig.icon}</span>
+                    </div>
+                    <h2 class="text-4xl font-bold text-green-600 mb-6">تم التسجيل بنجاح!</h2>
+                    <p class="text-2xl mb-8">مرحباً <strong class="text-purple-600">${userName}</strong></p>
+                    
+                    <div class="glass-ultra p-8 mb-10 rounded-3xl text-center">
+                        <div class="w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mx-auto mb-6">
+                            <i class="fas fa-hourglass-half text-yellow-600 text-3xl"></i>
+                        </div>
+                        <h4 class="font-bold text-yellow-800 mb-4 text-xl">طلبك قيد المراجعة</h4>
+                        <p class="text-yellow-700 text-lg leading-relaxed">
+                            ستصلك رسالة تأكيد عند الموافقة على طلبك خلال 24 ساعة
+                        </p>
+                    </div>
+                    
+                    <button onclick="closeModal()" class="btn-next-gen ${eventConfig.gradient}">
+                        <i class="fas fa-heart text-xl"></i>
+                        رائع!
+                    </button>
+                </div>
+            `;
+
+            createModal(modalContent);
+        }
+
+        // Show Invitation Details with Enhanced Features
+        async function showInvitationDetails(eventId, invitationData = null) {
+            try {
+                let invitation = invitationData;
+                
+                if (!invitation) {
+                    const invitationSnapshot = await db.collection('invitations')
+                        .where('eventId', '==', eventId)
+                        .where('phoneNumber', '==', userPhone)
+                        .get();
+                    
+                    if (invitationSnapshot.empty) {
+                        showToast('لم يتم العثور على دعوة لهذا الرقم', 'error');
+                        return;
+                    }
+                    
+                    invitation = invitationSnapshot.docs[0].data();
+                }
+
+                const event = allEvents.find(e => e.id === eventId);
+                const eventType = invitation.eventType || detectEventType(event?.title || '', event?.description || '');
+                const eventConfig = eventMessages[eventType] || eventMessages.business;
+                const eventMessage = generateEventMessage(eventType, event || {}, '', '');
+                
+                const statusConfig = {
+                    'pending': {
+                        icon: '⏳',
+                        title: 'قيد المراجعة',
+                        color: '#f59e0b',
+                        bgClass: 'from-yellow-50 to-orange-50'
+                    },
+                    'accepted': {
+                        icon: '🎉',
+                        title: 'مقبولة',
+                        color: '#10b981',
+                        bgClass: 'from-green-50 to-emerald-50'
+                    },
+                    'rejected': {
+                        icon: '😔',
+                        title: 'مرفوضة',
+                        color: '#ef4444',
+                        bgClass: 'from-red-50 to-pink-50'
+                    }
+                };
+
+                const config = statusConfig[invitation.status];
+                
+                const modalContent = `
+                    <div class="p-10">
+                        <div class="text-center mb-10 mt-8">
+                            <div class="text-7xl mb-6">${config.icon}</div>
+                            <h2 class="text-4xl font-bold mb-4" style="color: ${config.color}">${config.title}</h2>
+                            <p class="text-gray-600 text-xl">حالة دعوتك للمناسبة</p>
+                        </div>
+
+                        <!-- Event Message for Accepted Invitations -->
+                        ${invitation.status === 'accepted' ? `
+                            <div class="event-message mb-8">
+                                <h3 class="text-2xl font-bold mb-4 text-center ${eventConfig.gradient} bg-clip-text text-transparent">
+                                    ${eventMessage.title}
+                                </h3>
+                                <div class="text-lg leading-relaxed whitespace-pre-line">
+                                    ${eventMessage.message}
+                                </div>
+                            </div>
+                        ` : ''}
+
+                        <!-- Event & User Info -->
+                        <div class="glass-ultra p-8 mb-10 rounded-3xl">
+                            <h3 class="font-bold text-2xl mb-6 text-gray-800 text-center">
+                                <span class="text-2xl ml-2">${eventConfig.icon}</span>
+                                ${event?.title || invitation.eventTitle || 'مناسبة'}
+                            </h3>
+                            <div class="grid grid-cols-1 gap-4 text-gray-700">
+                                <div class="flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center ml-4">
+                                        <i class="fas fa-user text-purple-600 text-lg"></i>
+                                    </div>
+                                    <span class="text-lg"><strong>الاسم:</strong> ${invitation.fullName}</span>
+                                </div>
+                                <div class="flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center ml-4">
+                                        <i class="fas fa-mobile-alt text-blue-600 text-lg"></i>
+                                    </div>
+                                    <span class="text-lg"><strong>الجوال:</strong> ${invitation.phoneNumber}</span>
+                                </div>
+                                <div class="flex items-center justify-center">
+                                    <div class="w-12 h-12 rounded-full bg-green-100 flex items-center justify-center ml-4">
+                                        <i class="fas fa-clock text-green-600 text-lg"></i>
+                                    </div>
+                                    <span class="text-lg"><strong>التسجيل:</strong> ${new Date(invitation.createdAt).toLocaleDateString('ar-SA')}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        ${invitation.status === 'accepted' ? `
+                            <!-- Enhanced QR Code Section -->
+                            <div class="qr-container-ultra mb-10">
+                                <div class="relative z-10">
+                                    <h4 class="font-bold text-2xl mb-8 text-gray-800 text-center">
+                                        <i class="fas fa-qrcode ml-2 text-purple-600"></i>
+                                        الباركود الخاص بك
+                                    </h4>
+                                    
+                                    <div class="bg-white rounded-3xl p-8 mb-8 shadow-2xl">
+                                        <div id="qrcode-container" class="flex justify-center mb-6">
+                                            <div class="w-56 h-56 border-4 border-purple-200 rounded-3xl flex items-center justify-center bg-white shadow-lg">
+                                                <div class="loader-next-gen"></div>
+                                            </div>
+                                        </div>
+                                        <p class="text-center text-gray-600 font-medium text-lg mb-4">
+                                            احتفظ بهذا الباركود لاستخدامه عند الحضور
+                                        </p>
+                                        <div class="text-center">
+                                            <span class="inline-flex items-center px-4 py-2 rounded-full bg-purple-100 text-purple-800 font-bold">
+                                                <i class="fas fa-scan ml-2"></i>
+                                                عدد المسح: ${invitation.scanCount || 0}/${invitation.maxScans || 1}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-2 gap-4 mb-8">
+                                        <button onclick="downloadQRCode()" class="btn-next-gen bg-gradient-to-r from-blue-500 to-cyan-500">
+                                            <i class="fas fa-download text-xl"></i>
+                                            تحميل
+                                        </button>
+                                        <button onclick="shareInvitation()" class="btn-next-gen bg-gradient-to-r from-green-500 to-teal-500">
+                                            <i class="fas fa-share text-xl"></i>
+                                            مشاركة
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Interactive Map Section -->
+                            ${event?.location ? `
+                                <div class="map-container">
+                                    <h4 class="font-bold text-xl mb-4 text-center text-gray-800">
+                                        <i class="fas fa-map-marker-alt ml-2 text-red-600"></i>
+                                        موقع المناسبة
+                                    </h4>
+                                    <div id="interactive-map-${eventId}" class="map-frame mb-4"></div>
+                                    <div class="flex items-center justify-center p-4 bg-gray-50 rounded-lg">
+                                        <i class="fas fa-map-marker-alt text-red-500 ml-2"></i>
+                                        <span class="font-medium">${event.location}</span>
+                                    </div>
+                                </div>
+                            ` : ''}
+
+                        ` : invitation.status === 'pending' ? `
+                            <div class="glass-ultra p-8 rounded-3xl mb-10 text-center">
+                                <h4 class="font-bold text-yellow-800 mb-6 text-xl">
+                                    <i class="fas fa-hourglass-half ml-2"></i>
+                                    معلومات الانتظار
+                                </h4>
+                                <div class="space-y-6 text-yellow-700">
+                                    <div class="flex items-center justify-center">
+                                        <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center ml-4">
+                                            <i class="fas fa-clock text-yellow-600 text-lg"></i>
+                                        </div>
+                                        <span class="text-lg">طلبك قيد المراجعة من قبل منظم المناسبة</span>
+                                    </div>
+                                    <div class="flex items-center justify-center">
+                                        <div class="w-12 h-12 rounded-full bg-yellow-100 flex items-center justify-center ml-4">
+                                            <i class="fas fa-bell text-yellow-600 text-lg"></i>
+                                        </div>
+                                        <span class="text-lg">ستصلك رسالة تأكيد عند الموافقة</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ` : `
+                            <div class="glass-ultra p-8 rounded-3xl mb-10 text-center">
+                                <h4 class="font-bold text-red-800 mb-6 text-xl">
+                                    <i class="fas fa-times-circle ml-2"></i>
+                                    الطلب مرفوض
+                                </h4>
+                                <p class="text-red-700 text-lg leading-relaxed mb-6">
+                                    نأسف لعدم إمكانية قبول طلبك في هذه المناسبة. نتطلع لرؤيتك في مناسبات أخرى.
+                                </p>
+                                <div class="bg-blue-50 rounded-2xl p-6">
+                                    <p class="text-blue-700 font-medium">
+                                        <i class="fas fa-info-circle ml-2"></i>
+                                        يمكنك إعادة إرسال طلب الحضور مرة أخرى
+                                    </p>
+                                </div>
+                            </div>
+                        `}
+
+                        <!-- Action Buttons -->
+                        <div class="grid grid-cols-1 gap-4">
+                            <button onclick="closeModal()" class="btn-next-gen bg-gradient-to-r from-gray-400 to-gray-500">
+                                <i class="fas fa-times text-xl"></i>
+                                إغلاق
+                            </button>
+                            ${invitation.status === 'pending' ? `
+                                <button onclick="refreshInvitationStatus('${eventId}')" class="btn-next-gen ${eventConfig.gradient}">
+                                    <i class="fas fa-sync text-xl"></i>
+                                    تحديث الحالة
+                                </button>
+                            ` : invitation.status === 'rejected' ? `
+                                <button onclick="closeModal(); setTimeout(() => handleReregistration('${eventId}'), 500)" class="btn-next-gen bg-gradient-to-r from-orange-500 to-red-500">
+                                    <i class="fas fa-redo text-xl"></i>
+                                    إعادة إرسال الطلب
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                `;
+
+                const modal = createModal(modalContent);
+
+                // Generate QR Code if accepted
+                if (invitation.status === 'accepted' && invitation.qrCode) {
+                    setTimeout(() => {
+                        generateQRCodeWithQRious(invitation.qrCode);
+                    }, 300);
+                }
+
+                // Create interactive map if accepted and location exists
+                if (invitation.status === 'accepted' && event?.location) {
+                    setTimeout(() => {
+                        createInteractiveMap(event.location, `interactive-map-${eventId}`);
+                    }, 500);
+                }
+
+            } catch (error) {
+                console.error('Error showing invitation details:', error);
+                showToast('حدث خطأ في عرض تفاصيل الدعوة', 'error');
+            }
+        }
+
+        // Generate QR Code using QRious library (Enhanced)
+        function generateQRCodeWithQRious(qrData) {
+            const container = document.getElementById('qrcode-container');
+            if (!container) return;
+
+            try {
+                // Clear container
+                container.innerHTML = '';
+
+                // Create canvas
+                const canvas = document.createElement('canvas');
+                canvas.id = 'qr-canvas';
+                canvas.style.borderRadius = '20px';
+                canvas.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.1)';
+                
+                container.appendChild(canvas);
+
+                // Check if QRious is available
+                if (typeof QRious !== 'undefined') {
+                    // Generate QR code using QRious
+                    const qr = new QRious({
+                        element: canvas,
+                        value: qrData,
+                        size: 220,
+                        background: '#ffffff',
+                        foreground: '#8b5cf6',
+                        level: 'H' // High error correction
+                    });
+                    
+                    console.log('QR Code generated successfully with QRious');
+                } else {
+                    // Fallback: Manual QR code creation
+                    createManualQRCode(canvas, qrData);
+                }
+
+            } catch (error) {
+                console.error('QR Code generation error:', error);
+                
+                // Fallback display with beautiful design
+                container.innerHTML = `
+                    <div class="w-56 h-56 border-4 border-purple-200 rounded-3xl flex items-center justify-center bg-gradient-to-br from-purple-50 to-blue-50">
+                        <div class="text-center p-6">
+                            <div class="text-5xl mb-4">📱</div>
+                            <p class="font-bold text-purple-800 mb-3 text-lg">الباركود</p>
+                            <div class="bg-white rounded-lg p-3 shadow-inner">
+                                <p class="text-xs text-purple-600 font-mono break-all leading-relaxed">${qrData}</p>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Enhanced Manual QR Code creation
+        function createManualQRCode(canvas, data) {
+            const ctx = canvas.getContext('2d');
+            canvas.width = 220;
+            canvas.height = 220;
+            
+            // Fill background with gradient
+            const gradient = ctx.createLinearGradient(0, 0, 220, 220);
+            gradient.addColorStop(0, '#ffffff');
+            gradient.addColorStop(1, '#f8fafc');
+            ctx.fillStyle = gradient;
+            ctx.fillRect(0, 0, 220, 220);
+            
+            // Create advanced pattern
+            ctx.fillStyle = '#8b5cf6';
+            const gridSize = 11;
+            const cellSize = 200 / gridSize;
+            const margin = 10;
+            
+            // Simple pattern based on data hash
+            let hash = 0;
+            for (let i = 0; i < data.length; i++) {
+                hash = ((hash << 5) - hash + data.charCodeAt(i)) & 0xffffffff;
+            }
+            
+            for (let x = 0; x < gridSize; x++) {
+                for (let y = 0; y < gridSize; y++) {
+                    const probability = Math.abs(Math.sin(hash + x * gridSize + y)) * 100;
+                    if (probability > 40) {
+                        ctx.fillRect(
+                            margin + x * cellSize, 
+                            margin + y * cellSize, 
+                            cellSize - 1, 
+                            cellSize - 1
+                        );
+                    }
+                }
+            }
+            
+            // Add enhanced corner squares
+            const cornerSize = cellSize * 3;
+            
+            // Top-left corner
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(margin, margin, cornerSize, cornerSize);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(margin + cellSize, margin + cellSize, cellSize, cellSize);
+            
+            // Top-right corner
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(margin + (gridSize - 3) * cellSize, margin, cornerSize, cornerSize);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(margin + (gridSize - 2) * cellSize, margin + cellSize, cellSize, cellSize);
+            
+            // Bottom-left corner
+            ctx.fillStyle = '#8b5cf6';
+            ctx.fillRect(margin, margin + (gridSize - 3) * cellSize, cornerSize, cornerSize);
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(margin + cellSize, margin + (gridSize - 2) * cellSize, cellSize, cellSize);
+            
+            console.log('Enhanced manual QR pattern created');
+        }
+
+        // Download QR Code
+        function downloadQRCode() {
+            const canvas = document.getElementById('qr-canvas');
+            if (canvas) {
+                try {
+                    // Create a higher quality download
+                    const tempCanvas = document.createElement('canvas');
+                    const tempCtx = tempCanvas.getContext('2d');
+                    tempCanvas.width = 800;
+                    tempCanvas.height = 800;
+                    
+                    // Scale up the QR code
+                    tempCtx.imageSmoothingEnabled = false;
+                    tempCtx.drawImage(canvas, 0, 0, 800, 800);
+                    
+                    const link = document.createElement('a');
+                    link.download = `دعوة-${userPhone}-${new Date().toISOString().slice(0, 10)}.png`;
+                    link.href = tempCanvas.toDataURL('image/png');
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    showToast('تم تحميل الباركود بنجاح! 📱', 'success');
+                } catch (error) {
+                    console.error('Error downloading QR code:', error);
+                    showToast('حدث خطأ في تحميل الباركود', 'error');
+                }
+            } else {
+                showToast('الباركود غير متوفر للتحميل', 'error');
+            }
+        }
+
+        // Share Invitation
+        function shareInvitation() {
+            const invitationText = `🎉 تم قبول دعوتي للمناسبة!\n\nسأراكم هناك إن شاء الله 🌟\n\n#دعوات #مناسبات`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: 'دعوة مقبولة 🎉',
+                    text: invitationText
+                }).then(() => {
+                    showToast('تم مشاركة الدعوة بنجاح! 📤', 'success');
+                }).catch(err => {
+                    console.error('Error sharing:', err);
+                    copyToClipboard(invitationText);
+                });
+            } else {
+                copyToClipboard(invitationText);
+            }
+        }
+
+        // Copy to clipboard with fallback
+        function copyToClipboard(text) {
+            if (navigator.clipboard) {
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('تم نسخ النص للمشاركة! 📋', 'success');
+                }).catch(() => {
+                    showToast('يمكنك مشاركة دعوتك يدوياً', 'info');
+                });
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    showToast('تم نسخ النص للمشاركة! 📋', 'success');
+                } catch (err) {
+                    showToast('يمكنك مشاركة دعوتك يدوياً', 'info');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Refresh Invitation Status
+        async function refreshInvitationStatus(eventId) {
+            try {
+                showToast('جاري تحديث الحالة...', 'info');
+                
+                const invitationSnapshot = await db.collection('invitations')
+                    .where('eventId', '==', eventId)
+                    .where('phoneNumber', '==', userPhone)
+                    .get();
+                
+                if (!invitationSnapshot.empty) {
+                    const invitation = invitationSnapshot.docs[0].data();
+                    
+                    if (invitation.status !== 'pending') {
+                        showToast('تم تحديث حالة دعوتك! 🎉', 'success');
+                        closeModal();
+                        setTimeout(() => {
+                            showInvitationDetails(eventId, invitation);
+                            loadEvents();
+                        }, 500);
+                    } else {
+                        showToast('لا يزال طلبك قيد المراجعة ⏳', 'info');
+                    }
+                } else {
+                    showToast('لم يتم العثور على الدعوة', 'error');
+                }
+            } catch (error) {
+                console.error('Error refreshing status:', error);
+                showToast('حدث خطأ في تحديث الحالة', 'error');
+            }
+        }
+
+        // Check My Invitations
+        function checkMyInvitations() {
+            if (!userPhone) {
+                const modalContent = `
+                    <div class="p-10">
+                        <div class="text-center mb-10 mt-8">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                                <i class="fas fa-mobile-alt text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-4xl font-bold text-gray-800 mb-4">رقم الجوال مطلوب</h2>
+                            <p class="text-gray-600 text-lg">أدخل رقم جوالك لعرض دعواتك</p>
+                        </div>
+                        
+                        <form id="phoneForm" class="space-y-8">
+                            <div>
+                                <label class="block text-sm font-bold text-gray-700 mb-4">
+                                    <i class="fas fa-mobile-alt ml-2 text-blue-600"></i>
+                                    رقم الجوال
+                                </label>
+                                <input type="tel" 
+                                    id="userPhoneInput" 
+                                    class="input-next-gen"
+                                    placeholder="05xxxxxxxx"
+                                    maxlength="10"
+                                    required>
+                                <p class="text-sm text-gray-500 mt-3">يجب أن يبدأ برقم 05 ويتكون من 10 أرقام</p>
+                            </div>
+                            
+                            <button type="submit" class="btn-next-gen">
+                                <i class="fas fa-search text-xl"></i>
+                                البحث عن دعواتي
+                            </button>
+                        </form>
+                    </div>
+                `;
+
+                const modal = createModal(modalContent);
+
+                document.getElementById('phoneForm').addEventListener('submit', (e) => {
+                    e.preventDefault();
+                    const phone = document.getElementById('userPhoneInput').value.trim();
+                    const phoneRegex = /^05[0-9]{8}$/;
+                    
+                    if (!phoneRegex.test(phone)) {
+                        showToast('رقم الجوال غير صحيح', 'error');
+                        return;
+                    }
+                    
+                    userPhone = phone;
+                    localStorage.setItem('userPhone', userPhone);
+                    closeModal();
+                    setTimeout(() => showMyInvitations(), 500);
+                });
+            } else {
+                showMyInvitations();
+            }
+        }
+
+        // Show My Invitations with Enhanced Design
+        async function showMyInvitations() {
+            try {
+                showToast('جاري البحث عن دعواتك...', 'info');
+                
+                const invitationsSnapshot = await db.collection('invitations')
+                    .where('phoneNumber', '==', userPhone)
+                    .orderBy('timestamp', 'desc')
+                    .get();
+
+                if (invitationsSnapshot.empty) {
+                    const modalContent = `
+                        <div class="p-10 text-center">
+                            <div class="w-28 h-28 rounded-full bg-gradient-to-r from-gray-100 to-gray-200 flex items-center justify-center mx-auto mb-8 shadow-2xl">
+                                <i class="fas fa-inbox text-gray-400 text-4xl"></i>
+                            </div>
+                            <h2 class="text-4xl font-bold mb-6 text-gray-800">لا توجد دعوات</h2>
+                            <p class="text-gray-600 mb-10 text-xl">لا توجد دعوات مسجلة برقمك</p>
+                            <button onclick="closeModal()" class="btn-next-gen">
+                                <i class="fas fa-check text-xl"></i>
+                                حسناً
+                            </button>
+                        </div>
+                    `;
+                    createModal(modalContent);
+                    return;
+                }
+
+                // Get events data
+                const eventIds = [...new Set(invitationsSnapshot.docs.map(doc => doc.data().eventId))];
+                const eventsData = {};
+                
+                for (const eventId of eventIds) {
+                    try {
+                        const eventDoc = await db.collection('events').doc(eventId).get();
+                        if (eventDoc.exists) {
+                            eventsData[eventId] = eventDoc.data();
+                        }
+                    } catch (error) {
+                        console.error('Error loading event:', error);
+                    }
+                }
+
+                const invitationsHTML = invitationsSnapshot.docs.map((doc, index) => {
+                    const invitation = doc.data();
+                    const event = eventsData[invitation.eventId];
+                    const eventType = invitation.eventType || detectEventType(event?.title || '', event?.description || '');
+                    const eventConfig = eventMessages[eventType] || eventMessages.business;
+                    
+                    const statusConfig = {
+                        'pending': { 
+                            icon: '⏳', 
+                            color: 'yellow', 
+                            text: 'قيد المراجعة',
+                            bgClass: 'from-yellow-50 to-orange-50',
+                            borderClass: 'border-yellow-200'
+                        },
+                        'accepted': { 
+                            icon: '✅', 
+                            color: 'green', 
+                            text: 'مقبولة',
+                            bgClass: 'from-green-50 to-emerald-50',
+                            borderClass: 'border-green-200'
+                        },
+                        'rejected': { 
+                            icon: '❌', 
+                            color: 'red', 
+                            text: 'مرفوضة',
+                            bgClass: 'from-red-50 to-pink-50',
+                            borderClass: 'border-red-200'
+                        }
+                    };
+                    
+                    const status = statusConfig[invitation.status] || statusConfig.pending;
+                    const eventDate = event?.date ? new Date(event.date) : null;
+                    
+                    return `
+                        <div class="bg-gradient-to-r ${status.bgClass} rounded-3xl p-8 mb-6 border-2 ${status.borderClass} hover:shadow-2xl transition-all duration-500 cursor-pointer transform hover:scale-[1.02] fade-in-ultra"
+                             style="animation-delay: ${index * 0.1}s"
+                             onclick="closeModal(); setTimeout(() => showInvitationDetails('${invitation.eventId}'), 500)">
+                            
+                            <div class="flex justify-between items-start mb-6">
+                                <div class="flex-1">
+                                    <h4 class="font-bold text-xl text-gray-800 mb-3 flex items-center">
+                                        <span class="text-2xl ml-3">${eventConfig.icon}</span>
+                                        ${event?.title || invitation.eventTitle || 'مناسبة'}
+                                    </h4>
+                                    <div class="space-y-2 text-gray-600">
+                                        <div class="flex items-center">
+                                            <i class="fas fa-clock ml-3 w-5 text-purple-600"></i>
+                                            <span class="font-medium">${eventDate ? eventDate.toLocaleDateString('ar-SA') : 'التاريخ غير محدد'}</span>
+                                        </div>
+                                        ${event?.location ? `
+                                            <div class="flex items-center">
+                                                <i class="fas fa-map-marker-alt ml-3 w-5 text-red-600"></i>
+                                                <span class="truncate font-medium">${event.location}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+                                <div class="text-center ml-6">
+                                    <div class="text-4xl mb-3">${status.icon}</div>
+                                    <span class="text-sm font-bold text-${status.color}-600 uppercase px-4 py-2 rounded-full bg-white/70 shadow-md">
+                                        ${status.text}
+                                    </span>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center justify-between pt-6 border-t border-white/50">
+                                <div class="text-gray-600 font-medium">
+                                    <i class="fas fa-user ml-2"></i>
+                                    ${invitation.fullName}
+                                </div>
+                                ${invitation.status === 'accepted' ? `
+                                    <div class="flex items-center gap-6">
+                                        <span class="text-green-600 font-bold">
+                                            <i class="fas fa-qrcode ml-2"></i>
+                                            باركود جاهز
+                                        </span>
+                                        <span class="text-sm bg-green-100 text-green-800 px-3 py-1 rounded-full font-bold">
+                                            مسح: ${invitation.scanCount || 0}/${invitation.maxScans || 1}
+                                        </span>
+                                    </div>
+                                ` : ''}
+                            </div>
+                            
+                            <div class="mt-4 text-sm text-gray-500 flex items-center">
+                                <i class="fas fa-calendar-plus ml-2"></i>
+                                <span>تم التسجيل: ${new Date(invitation.createdAt).toLocaleDateString('ar-SA')}</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                const modalContent = `
+                    <div class="p-10">
+                        <div class="text-center mb-10 mt-8">
+                            <div class="w-24 h-24 rounded-full bg-gradient-to-r from-purple-500 to-blue-500 flex items-center justify-center mx-auto mb-6 shadow-2xl">
+                                <i class="fas fa-list text-white text-3xl"></i>
+                            </div>
+                            <h2 class="text-4xl font-bold text-gray-800 mb-4">دعواتي (${invitationsSnapshot.size})</h2>
+                            <p class="text-gray-600 text-lg">مرحباً برقم: <strong class="font-bold text-purple-600">${userPhone}</strong></p>
+                        </div>
+                        
+                        <div class="max-h-96 overflow-y-auto mb-8 space-y-2">
+                            ${invitationsHTML}
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-6">
+                            <button onclick="closeModal()" class="btn-next-gen bg-gradient-to-r from-gray-400 to-gray-500">
+                                <i class="fas fa-times text-xl"></i>
+                                إغلاق
+                            </button>
+                            <button onclick="userPhone=''; localStorage.removeItem('userPhone'); closeModal(); setTimeout(() => checkMyInvitations(), 500)" class="btn-next-gen bg-gradient-to-r from-blue-500 to-indigo-500">
+                                <i class="fas fa-user-edit text-xl"></i>
+                                تغيير الرقم
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                createModal(modalContent);
+
+            } catch (error) {
+                console.error('Error loading user invitations:', error);
+                showToast('حدث خطأ في تحميل دعواتك', 'error');
+            }
+        }
+
+        // Helper Functions
+        function getTimeUntilEvent(eventDate) {
+            const now = new Date();
+            const diff = eventDate.getTime() - now.getTime();
+            
+            if (diff < 0) return 'انتهت';
+            
+            const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+            
+            if (days > 0) return `${days} يوم`;
+            if (hours > 0) return `${hours} ساعة`;
+            if (minutes > 0) return `${minutes} دقيقة`;
+            return 'الآن';
+        }
+
+        function isEventToday(eventDate) {
+            const today = new Date();
+            const event = new Date(eventDate);
+            return today.toDateString() === event.toDateString();
+        }
+
+        function getStatusText(status) {
+            const statusTexts = {
+                'pending': 'قيد الانتظار',
+                'accepted': 'مقبولة',
+                'rejected': 'مرفوضة'
+            };
+            return statusTexts[status] || status;
+        }
+
+        // Event Listeners
+        document.addEventListener('click', (e) => {
+            if (e.target.classList.contains('modal-next-gen')) {
+                closeModal();
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+            
+            // Keyboard shortcuts
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                checkMyInvitations();
+            }
+            
+            if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+                e.preventDefault();
+                loadEvents();
+                showToast('تم تحديث المناسبات 🔄', 'info');
+            }
+        });
+
+        // Initialize Application
+        document.addEventListener('DOMContentLoaded', async () => {
+            try {
+                console.log('🚀 Initializing Next-Gen Events Platform...');
+                
+                // Add loading animations
+                const elements = document.querySelectorAll('.fade-in-ultra, .scale-in-ultra');
+                elements.forEach((el, index) => {
+                    el.style.animationDelay = `${index * 0.1}s`;
+                });
+
+                // Load events with retry mechanism
+                let retryCount = 0;
+                const maxRetries = 3;
+                
+                while (retryCount < maxRetries) {
+                    try {
+                        await loadEvents();
+                        console.log('✅ Events loaded successfully');
+                        break;
+                    } catch (error) {
+                        retryCount++;
+                        console.error(`❌ Attempt ${retryCount} failed:`, error);
+                        
+                        if (retryCount === maxRetries) {
+                            throw error;
+                        }
+                        
+                        await new Promise(resolve => setTimeout(resolve, 1000 * retryCount));
+                    }
+                }
+
+                // Setup real-time listeners
+                try {
+                    db.collection('events').onSnapshot((snapshot) => {
+                        console.log('📡 Events updated in real-time');
+                        loadEvents();
+                    }, (error) => {
+                        console.error('Real-time events error:', error);
+                    });
+
+                    if (userPhone) {
+                        db.collection('invitations')
+                            .where('phoneNumber', '==', userPhone)
+                            .onSnapshot((snapshot) => {
+                                console.log('📡 User invitations updated in real-time');
+                                loadEvents();
+                            }, (error) => {
+                                console.error('Real-time invitations error:', error);
+                            });
+                    }
+                } catch (error) {
+                    console.error('Error setting up real-time listeners:', error);
+                }
+
+                // Welcome message for first-time users
+                const isFirstVisit = !localStorage.getItem('hasVisited');
+                if (isFirstVisit) {
+                    localStorage.setItem('hasVisited', 'true');
+                    setTimeout(() => {
+                        showToast('مرحباً بك في منصة دعوات العصرية! 🎉', 'success');
+                    }, 2000);
+                }
+
+                console.log('🎯 Next-Gen Events Platform loaded successfully!');
+
+            } catch (error) {
+                console.error('❌ Error initializing app:', error);
+                
+                document.getElementById('eventsGrid').innerHTML = `
+                    <div class="col-span-full text-center py-24">
+                        <div class="glass-ultra p-16 rounded-3xl">
+                            <div class="text-9xl mb-8">🔧</div>
+                            <h3 class="text-4xl font-bold text-red-300 mb-6">حدث خطأ في التحميل</h3>
+                            <p class="text-white/70 text-xl mb-8">يرجى التحقق من اتصال الإنترنت والمحاولة مرة أخرى</p>
+                            <button onclick="location.reload()" class="btn-next-gen">
+                                <i class="fas fa-redo text-xl"></i>
+                                إعادة تحميل الصفحة
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        });
+
+        // Performance monitoring
+        window.addEventListener('load', () => {
+            const loadTime = performance.now();
+            console.log(`⚡ Page loaded in ${Math.round(loadTime)}ms`);
+            
+            if (loadTime > 3000) {
+                console.warn('⚠️ Slow loading detected');
+            }
+        });
+
+        console.log('🎉 Next-Gen Events Platform with Interactive Maps ready!');
+    </script>
+</body>
+</html>

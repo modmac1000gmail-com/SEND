@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام الدعوات</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Cairo', sans-serif; }
+        .animate-gradient {
+            background: linear-gradient(-45deg, #6366f1, #a855f7, #ec4899, #8b5cf6);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glassmorphism {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+    </style>
+</head>
+<body class="animate-gradient min-h-screen p-6">
+    <div class="max-w-7xl mx-auto space-y-6">
+        <!-- رأس الصفحة -->
+        <div class="text-center">
+            <h1 class="text-4xl font-black text-white mb-2">لوحة التحكم</h1>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <!-- قارئ الباركود -->
+            <div class="glassmorphism rounded-3xl p-6 shadow-xl">
+                <h2 class="text-2xl font-bold mb-4">مسح الباركود</h2>
+                <div id="reader" class="overflow-hidden rounded-2xl"></div>
+                <div id="scanResult" class="mt-4 p-4 rounded-xl hidden"></div>
+            </div>
+
+            <!-- الإحصائيات -->
+            <div class="glassmorphism rounded-3xl p-6 shadow-xl">
+                <h2 class="text-2xl font-bold mb-4">الإحصائيات</h2>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white rounded-2xl p-4 text-center">
+                        <span class="block text-3xl font-bold text-indigo-600 mb-2" id="totalCount">0</span>
+                        <span class="text-gray-600">إجمالي الطلبات</span>
+                    </div>
+                    <div class="bg-white rounded-2xl p-4 text-center">
+                        <span class="block text-3xl font-bold text-purple-600 mb-2" id="pendingCount">0</span>
+                        <span class="text-gray-600">قيد الانتظار</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- جدول الدعوات -->
+        <div class="glassmorphism rounded-3xl p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-2xl font-bold">قائمة الدعوات</h2>
+                <select id="statusFilter" 
+                    class="bg-white px-4 py-2 rounded-xl border-2 border-gray-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none">
+                    <option value="all">جميع الحالات</option>
+                    <option value="pending">قيد الانتظار</option>
+                    <option value="accepted">مقبول</option>
+                    <option value="rejected">مرفوض</option>
+                </select>
+            </div>
+
+            <div class="overflow-x-auto">
+                <table class="w-full bg-white rounded-xl overflow-hidden">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-600">الاسم</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-600">رقم الجوال</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-600">الحالة</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-600">التاريخ</th>
+                            <th class="px-6 py-4 text-right text-sm font-bold text-gray-600">الإجراءات</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invitationsBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuQ-Icok0gl5C31ElazN9RrZz99vJ79LQ",
+            authDomain: "dfhdsds-514ec.firebaseapp.com",
+            projectId: "dfhdsds-514ec",
+            storageBucket: "dfhdsds-514ec.firebasestorage.app",
+            messagingSenderId: "972581116542",
+            appId: "1:972581116542:web:c1906d0d75dffc5fb4562f",
+            measurementId: "G-79499LG545"
+        };
+
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+
+        // تهيئة قارئ الباركود
+        const html5QrcodeScanner = new Html5QrcodeScanner(
+            "reader", 
+            { 
+                fps: 10, 
+                qrbox: { width: 250, height: 250 },
+                experimentalFeatures: {
+                    useBarCodeDetectorIfSupported: true
+                }
+            }
+        );
+
+        // معالجة مسح الباركود
+        html5QrcodeScanner.render(async (decodedText) => {
+            const scanResult = document.getElementById('scanResult');
+            scanResult.classList.remove('hidden');
+
+            try {
+                // البحث عن الباركود في قاعدة البيانات
+                const querySnapshot = await db.collection('invitations')
+                    .where('qrCode', '==', decodedText)
+                    .get();
+
+                if (querySnapshot.empty) {
+                    showScanResult("باركود غير صالح!", "error");
+                    return;
+                }
+
+                const doc = querySnapshot.docs[0];
+                const invitation = doc.data();
+
+                if (invitation.used) {
+                    showScanResult("تم استخدام هذا الباركود مسبقاً!", "error");
+                    return;
+                }
+
+                if (invitation.status !== 'accepted') {
+                    showScanResult("هذا الباركود غير مفعل!", "error");
+                    return;
+                }
+
+                // تحديث حالة الباركود
+                await db.collection('invitations').doc(doc.id).update({
+                    used: true,
+                    usedAt: firebase.firestore.FieldValue.serverTimestamp()
+                });
+
+                showScanResult(`تم تأكيد حضور ${invitation.fullName} بنجاح!`, "success");
+                updateInvitationsList(); // تحديث القائمة
+
+            } catch (error) {
+                console.error("Error during scan:", error);
+                showScanResult("حدث خطأ أثناء المسح، حاول مرة أخرى", "error");
+            }
+        });
+
+        // عرض نتيجة المسح
+        function showScanResult(message, type) {
+            const scanResult = document.getElementById('scanResult');
+            scanResult.className = `mt-4 p-4 rounded-xl text-center font-bold ${
+                type === 'error' 
+                ? 'bg-red-100 text-red-800' 
+                : 'bg-green-100 text-green-800'
+            }`;
+            scanResult.textContent = message;
+
+            // إخفاء الرسالة بعد 3 ثواني
+            setTimeout(() => {
+                scanResult.classList.add('hidden');
+            }, 3000);
+        }
+
+        // تحديث قائمة الدعوات
+        async function updateInvitationsList() {
+            try {
+                const snapshot = await db.collection('invitations')
+                    .orderBy('timestamp', 'desc')
+                    .get();
+                
+                const tbody = document.getElementById('invitationsBody');
+                const statusFilter = document.getElementById('statusFilter').value;
+                let total = 0;
+                let pending = 0;
+                
+                tbody.innerHTML = '';
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    total++;
+                    if (data.status === 'pending') pending++;
+
+                    if (statusFilter !== 'all' && data.status !== statusFilter) return;
+
+                    const row = `
+                        <tr class="hover:bg-gray-50">
+                            <td class="px-6 py-4">
+                                <div class="font-medium">${data.fullName}</div>
+                            </td>
+                            <td class="px-6 py-4">${data.phoneNumber}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-xl text-sm font-medium ${getStatusClass(data.status)}">
+                                    ${getStatusText(data.status)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 text-gray-500">
+                                ${new Date(data.timestamp?.toDate()).toLocaleString('ar-SA')}
+                            </td>
+                            <td class="px-6 py-4">
+                                ${data.status === 'pending' ? `
+                                    <button onclick="updateStatus('${doc.id}', 'accepted')"
+                                        class="text-green-600 hover:text-green-800 font-medium ml-4">
+                                        قبول
+                                    </button>
+                                    <button onclick="updateStatus('${doc.id}', 'rejected')"
+                                        class="text-red-600 hover:text-red-800 font-medium">
+                                        رفض
+                                    </button>
+                                ` : ''}
+                            </td>
+                        </tr>
+                    `;
+                    tbody.insertAdjacentHTML('beforeend', row);
+                });
+
+                document.getElementById('totalCount').textContent = total;
+                document.getElementById('pendingCount').textContent = pending;
+
+            } catch (error) {
+                console.error("Error updating list:", error);
+            }
+        }
+
+        // تحديث حالة الدعوة
+        async function updateStatus(docId, newStatus) {
+            try {
+                await db.collection('invitations').doc(docId).update({
+                    status: newStatus
+                });
+                updateInvitationsList();
+            } catch (error) {
+                console.error("Error updating status:", error);
+                alert('حدث خطأ في تحديث الحالة');
+            }
+        }
+
+        // دوال مساعدة
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'accepted': return 'bg-green-100 text-green-800';
+                case 'rejected': return 'bg-red-100 text-red-800';
+                default: return '';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'قيد الانتظار';
+                case 'accepted': return 'مقبول';
+                case 'rejected': return 'مرفوض';
+                default: return status;
+            }
+        }
+
+        // إضافة مستمع لفلتر الحالة
+        document.getElementById('statusFilter').addEventListener('change', updateInvitationsList);
+
+        // تحديث القائمة عند تحميل الصفحة
+        document.addEventListener('DOMContentLoaded', updateInvitationsList);
+
+        // مراقبة التغييرات في قاعدة البيانات
+        db.collection('invitations').onSnapshot(() => {
+            updateInvitationsList();
+        });
+    </script>
+</body>
+</html>

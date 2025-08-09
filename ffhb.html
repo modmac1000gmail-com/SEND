@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - نظام الدعوات</title>
+    
+    <!-- المكتبات المطلوبة -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-storage.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        * { font-family: 'Tajawal', sans-serif; }
+        
+        .admin-gradient {
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .content-area {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+        
+        .menu-item {
+            padding: 1rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .menu-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .menu-item.active {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        .table-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            overflow: hidden;
+        }
+
+        .custom-table th {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+        }
+
+        .custom-table td {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .custom-button {
+            background: linear-gradient(135deg, #3b82f6 0%, #6366f1 100%);
+            transition: all 0.3s ease;
+        }
+
+        .custom-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(59, 130, 246, 0.4);
+        }
+
+        .modal {
+            backdrop-filter: blur(8px);
+            background: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-out;
+        }
+    </style>
+</head>
+<body class="admin-gradient text-gray-100">
+    <div class="flex">
+        <!-- القائمة الجانبية -->
+        <div class="sidebar w-64 h-screen fixed right-0 p-6 border-l border-gray-800">
+            <div class="mb-10">
+                <h1 class="text-2xl font-bold text-white">لوحة التحكم</h1>
+            </div>
+            
+            <nav class="space-y-4">
+                <div class="menu-item active" data-tab="dashboard" onclick="showTab('dashboard')">
+                    <span class="block">لوحة المعلومات</span>
+                </div>
+                <div class="menu-item" data-tab="events" onclick="showTab('events')">
+                    <span class="block">المناسبات</span>
+                </div>
+                <div class="menu-item" data-tab="invitations" onclick="showTab('invitations')">
+                    <span class="block">الدعوات</span>
+                </div>
+                <div class="menu-item" data-tab="scanner" onclick="showTab('scanner')">
+                    <span class="block">الماسح الضوئي</span>
+                </div>
+            </nav>
+        </div>
+
+        <!-- المحتوى الرئيسي -->
+        <div class="mr-64 w-full p-8">
+            <!-- لوحة المعلومات -->
+            <div id="dashboardTab" class="space-y-8 fade-in">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-2">إجمالي المناسبات</h3>
+                        <p class="text-3xl font-bold text-blue-400" id="totalEvents">0</p>
+                    </div>
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-2">إجمالي الدعوات</h3>
+                        <p class="text-3xl font-bold text-purple-400" id="totalInvitations">0</p>
+                    </div>
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-lg font-bold mb-2">الدعوات المعلقة</h3>
+                        <p class="text-3xl font-bold text-yellow-400" id="pendingInvitations">0</p>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-xl font-bold mb-4">أحدث المناسبات</h3>
+                        <div id="recentEvents" class="space-y-4">
+                            <!-- سيتم إضافة المناسبات هنا -->
+                        </div>
+                    </div>
+                    <div class="card p-6 rounded-xl">
+                        <h3 class="text-xl font-bold mb-4">أحدث الدعوات</h3>
+                        <div id="recentInvitations" class="space-y-4">
+                            <!-- سيتم إضافة الدعوات هنا -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- قسم المناسبات -->
+            <div id="eventsTab" class="hidden space-y-6 fade-in">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">المناسبات</h2>
+                    <button onclick="showEventModal()" class="custom-button text-white px-6 py-3 rounded-xl">
+                        إضافة مناسبة جديدة
+                    </button>
+                </div>
+
+                <div class="table-container">
+                    <table class="custom-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-4 text-right">العنوان</th>
+                                <th class="px-6 py-4 text-right">التاريخ</th>
+                                <th class="px-6 py-4 text-right">الحالة</th>
+                                <th class="px-6 py-4 text-right">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody">
+                            <!-- سيتم إضافة المناسبات هنا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- قسم الدعوات -->
+            <div id="invitationsTab" class="hidden space-y-6 fade-in">
+                <div class="flex justify-between items-center">
+                    <h2 class="text-2xl font-bold">الدعوات</h2>
+                    <select id="invitationFilter" class="bg-transparent border border-gray-600 rounded-lg px-4 py-2">
+                        <option value="all">جميع الدعوات</option>
+                        <option value="pending">قيد الانتظار</option>
+                        <option value="accepted">مقبول</option>
+                        <option value="rejected">مرفوض</option>
+                    </select>
+                </div>
+
+                <div class="table-container">
+                    <table class="custom-table w-full">
+                        <thead>
+                            <tr>
+                                <th class="px-6 py-4 text-right">الاسم</th>
+                                <th class="px-6 py-4 text-right">رقم الجوال</th>
+                                <th class="px-6 py-4 text-right">المناسبة</th>
+                                <th class="px-6 py-4 text-right">الحالة</th>
+                                <th class="px-6 py-4 text-right">الإجراءات</th>
+                            </tr>
+                        </thead>
+                        <tbody id="invitationsTableBody">
+                            <!-- سيتم إضافة الدعوات هنا -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- قسم الماسح -->
+            <div id="scannerTab" class="hidden space-y-6 fade-in">
+                <h2 class="text-2xl font-bold">الماسح الضوئي</h2>
+                <div class="card p-6 rounded-xl">
+                    <div id="reader"></div>
+                    <div id="scanResult" class="mt-4 text-center hidden"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- نموذج إضافة/تعديل مناسبة -->
+    <div id="eventModal" class="modal fixed inset-0 hidden items-center justify-center">
+        <div class="modal-content rounded-2xl p-8 max-w-2xl w-full mx-4">
+            <form id="eventForm" class="space-y-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-2xl font-bold text-gray-800" id="modalTitle">إضافة مناسبة جديدة</h3>
+                    <button type="button" onclick="closeEventModal()" class="text-gray-500 hover:text-gray-700">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+
+                <input type="hidden" id="eventId">
+                
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">عنوان المناسبة</label>
+                    <input type="text" id="eventTitle" 
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">تفاصيل المناسبة</label>
+                    <textarea id="eventDescription" rows="3" 
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-gray-700 font-bold mb-2">صورة المناسبة</label>
+                    <input type="file" id="eventImage" accept="image/*" 
+                        class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">تاريخ المناسبة</label>
+                        <input type="datetime-local" id="eventDate" 
+                            class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200">
+                    </div>
+
+                    <div>
+                        <label class="block text-gray-700 font-bold mb-2">الموقع</label>
+                        <input type="text" id="eventLocation" 
+                            class="w-full px-4 py-2 rounded-xl border border-gray-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                            placeholder="رابط Google Maps">
+                    </div>
+                </div>
+
+                <div class="flex space-x-4 space-x-reverse">
+                    <button type="submit" class="flex-1 custom-button text-white px-6 py-3 rounded-xl">
+                        حفظ المناسبة
+                    </button>
+                    <button type="button" onclick="closeEventModal()" 
+                        class="flex-1 bg-gray-200 text-gray-800 px-6 py-3 rounded-xl hover:bg-gray-300">
+                        إلغاء
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // تهيئة Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyAuQ-Icok0gl5C31ElazN9RrZz99vJ79LQ",
+            authDomain: "dfhdsds-514ec.firebaseapp.com",
+                        projectId: "dfhdsds-514ec",
+            storageBucket: "dfhdsds-514ec.firebasestorage.app",
+            messagingSenderId: "972581116542",
+            appId: "1:972581116542:web:c1906d0d75dffc5fb4562f",
+            measurementId: "G-79499LG545"
+        };
+
+        // تأكد من عدم تكرار التهيئة
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        let scanner = null;
+
+        // دوال عرض التبويبات
+        function showTab(tabName) {
+            const tabs = ['dashboard', 'events', 'invitations', 'scanner'];
+            tabs.forEach(tab => {
+                document.getElementById(`${tab}Tab`).classList.add('hidden');
+                document.querySelector(`[data-tab="${tab}"]`).classList.remove('active');
+            });
+
+            document.getElementById(`${tabName}Tab`).classList.remove('hidden');
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+
+            switch(tabName) {
+                case 'dashboard':
+                    loadDashboardData();
+                    break;
+                case 'events':
+                    loadEvents();
+                    break;
+                case 'invitations':
+                    loadInvitations();
+                    break;
+                case 'scanner':
+                    initializeScanner();
+                    break;
+            }
+        }
+
+        // تحميل بيانات لوحة المعلومات
+        async function loadDashboardData() {
+            try {
+                const eventsSnapshot = await db.collection('events').get();
+                const invitationsSnapshot = await db.collection('invitations').get();
+
+                // تحديث الإحصائيات
+                document.getElementById('totalEvents').textContent = eventsSnapshot.size;
+                document.getElementById('totalInvitations').textContent = invitationsSnapshot.size;
+                document.getElementById('pendingInvitations').textContent = 
+                    invitationsSnapshot.docs.filter(doc => doc.data().status === 'pending').length;
+
+                // تحميل أحدث المناسبات
+                const recentEvents = await db.collection('events')
+                    .orderBy('createdAt', 'desc')
+                    .limit(5)
+                    .get();
+
+                const recentEventsHtml = recentEvents.docs.map(doc => {
+                    const event = doc.data();
+                    return `
+                        <div class="card p-4 rounded-lg">
+                            <h4 class="font-bold">${event.title}</h4>
+                            <p class="text-sm text-gray-300">${new Date(event.date).toLocaleString('ar-SA')}</p>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('recentEvents').innerHTML = recentEventsHtml;
+
+                // تحميل أحدث الدعوات
+                const recentInvitations = await db.collection('invitations')
+                    .orderBy('timestamp', 'desc')
+                    .limit(5)
+                    .get();
+
+                const recentInvitationsHtml = recentInvitations.docs.map(doc => {
+                    const invitation = doc.data();
+                    return `
+                        <div class="card p-4 rounded-lg">
+                            <h4 class="font-bold">${invitation.fullName}</h4>
+                            <p class="text-sm text-gray-300">${invitation.phoneNumber}</p>
+                            <span class="inline-block px-2 py-1 rounded text-sm ${getStatusClass(invitation.status)}">
+                                ${getStatusText(invitation.status)}
+                            </span>
+                        </div>
+                    `;
+                }).join('');
+                document.getElementById('recentInvitations').innerHTML = recentInvitationsHtml;
+
+            } catch (error) {
+                showAlert('خطأ في تحميل البيانات', 'error');
+            }
+        }
+
+        // تحميل المناسبات
+        async function loadEvents() {
+            try {
+                const snapshot = await db.collection('events').orderBy('date', 'desc').get();
+                const tbody = document.getElementById('eventsTableBody');
+                tbody.innerHTML = snapshot.docs.map(doc => {
+                    const event = doc.data();
+                    return `
+                        <tr class="border-b border-gray-700">
+                            <td class="px-6 py-4">${event.title}</td>
+                            <td class="px-6 py-4">${new Date(event.date).toLocaleString('ar-SA')}</td>
+                            <td class="px-6 py-4">
+                                <span class="px-3 py-1 rounded-full text-sm ${event.active ? 'bg-green-900 text-green-200' : 'bg-red-900 text-red-200'}">
+                                    ${event.active ? 'نشط' : 'منتهي'}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4">
+                                <button onclick="editEvent('${doc.id}')" class="text-blue-400 hover:text-blue-300 ml-3">تعديل</button>
+                                <button onclick="deleteEvent('${doc.id}')" class="text-red-400 hover:text-red-300">حذف</button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+            } catch (error) {
+                showAlert('خطأ في تحميل المناسبات', 'error');
+            }
+        }
+
+        // إضافة/تعديل مناسبة
+        async function handleEventSubmit(event) {
+            event.preventDefault();
+            const form = event.target;
+            const eventId = document.getElementById('eventId').value;
+            
+            try {
+                const eventData = {
+                    title: document.getElementById('eventTitle').value,
+                    description: document.getElementById('eventDescription').value,
+                    date: new Date(document.getElementById('eventDate').value).toISOString(),
+                    location: document.getElementById('eventLocation').value,
+                    active: true,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+
+                // معالجة الصورة إذا تم تحديدها
+                const imageFile = document.getElementById('eventImage').files[0];
+                if (imageFile) {
+                    const storageRef = storage.ref(`events/${Date.now()}_${imageFile.name}`);
+                    await storageRef.put(imageFile);
+                    eventData.image = await storageRef.getDownloadURL();
+                }
+
+                if (eventId) {
+                    await db.collection('events').doc(eventId).update(eventData);
+                    showAlert('تم تحديث المناسبة بنجاح', 'success');
+                } else {
+                    eventData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+                    await db.collection('events').add(eventData);
+                    showAlert('تم إضافة المناسبة بنجاح', 'success');
+                }
+
+                closeEventModal();
+                loadEvents();
+                loadDashboardData();
+            } catch (error) {
+                showAlert('حدث خطأ في حفظ المناسبة', 'error');
+            }
+        }
+
+        // تهيئة الماسح الضوئي
+        function initializeScanner() {
+            if (scanner) {
+                scanner.clear();
+            }
+            
+            scanner = new Html5QrcodeScanner("reader", { 
+                fps: 10,
+                qrbox: 250
+            });
+
+            scanner.render(async (decodedText) => {
+                try {
+                    const snapshot = await db.collection('invitations')
+                        .where('qrCode', '==', decodedText)
+                        .get();
+
+                    if (snapshot.empty) {
+                        showAlert('باركود غير صالح', 'error');
+                        return;
+                    }
+
+                    const doc = snapshot.docs[0];
+                    const invitation = doc.data();
+
+                    if (invitation.used) {
+                        showAlert('تم استخدام هذا الباركود مسبقاً', 'warning');
+                        return;
+                    }
+
+                    if (invitation.status !== 'accepted') {
+                        showAlert('هذا الباركود غير مفعل', 'warning');
+                        return;
+                    }
+
+                    await db.collection('invitations').doc(doc.id).update({
+                        used: true,
+                        usedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+
+                    showAlert(`تم تأكيد حضور ${invitation.fullName} بنجاح`, 'success');
+                    loadInvitations();
+
+                } catch (error) {
+                    showAlert('حدث خطأ أثناء المسح', 'error');
+                }
+            });
+        }
+
+        // دوال مساعدة
+        function showAlert(message, type) {
+            Swal.fire({
+                text: message,
+                icon: type,
+                confirmButtonText: 'حسناً',
+                confirmButtonColor: '#3b82f6'
+            });
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'pending': return 'bg-yellow-900 text-yellow-200';
+                case 'accepted': return 'bg-green-900 text-green-200';
+                case 'rejected': return 'bg-red-900 text-red-200';
+                default: return 'bg-gray-900 text-gray-200';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'pending': return 'قيد الانتظار';
+                case 'accepted': return 'مقبول';
+                case 'rejected': return 'مرفوض';
+                default: return status;
+            }
+        }
+
+
+
+
+        // تحميل الدعوات
+async function loadInvitations() {
+    try {
+        const filterValue = document.getElementById('invitationFilter').value;
+        let query = db.collection('invitations').orderBy('timestamp', 'desc');
+        
+        if (filterValue !== 'all') {
+            query = query.where('status', '==', filterValue);
+        }
+
+        const snapshot = await query.get();
+        const tbody = document.getElementById('invitationsTableBody');
+        
+        if (snapshot.empty) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="5" class="px-6 py-4 text-center text-gray-400">لا توجد دعوات</td>
+                </tr>
+            `;
+            return;
+        }
+
+        tbody.innerHTML = snapshot.docs.map(doc => {
+            const invitation = doc.data();
+            return `
+                <tr class="border-b border-gray-700">
+                    <td class="px-6 py-4">${invitation.fullName || ''}</td>
+                    <td class="px-6 py-4">${invitation.phoneNumber || ''}</td>
+                    <td class="px-6 py-4">${invitation.eventTitle || 'غير محدد'}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-3 py-1 rounded-full text-sm ${getStatusClass(invitation.status)}">
+                            ${getStatusText(invitation.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        ${invitation.status === 'pending' ? `
+                            <button onclick="updateInvitationStatus('${doc.id}', 'accepted')" 
+                                class="text-green-400 hover:text-green-300 ml-3">قبول</button>
+                            <button onclick="updateInvitationStatus('${doc.id}', 'rejected')" 
+                                class="text-red-400 hover:text-red-300">رفض</button>
+                        ` : ''}
+                    </td>
+                </tr>
+            `;
+        }).join('');
+    } catch (error) {
+        console.error('Error loading invitations:', error);
+        showAlert('حدث خطأ في تحميل الدعوات', 'error');
+    }
+}
+
+
+// إظهار نموذج إضافة/تعديل مناسبة
+function showEventModal() {
+    document.getElementById('eventModal').style.display = 'flex';
+    document.getElementById('eventForm').reset();
+    document.getElementById('eventId').value = '';
+    document.getElementById('modalTitle').textContent = 'إضافة مناسبة جديدة';
+}
+
+// إغلاق نموذج المناسبة
+function closeEventModal() {
+    document.getElementById('eventModal').style.display = 'none';
+}
+
+// تعديل مناسبة
+async function editEvent(eventId) {
+    try {
+        const doc = await db.collection('events').doc(eventId).get();
+        if (doc.exists) {
+            const event = doc.data();
+            document.getElementById('eventId').value = eventId;
+            document.getElementById('eventTitle').value = event.title || '';
+            document.getElementById('eventDescription').value = event.description || '';
+            document.getElementById('eventLocation').value = event.location || '';
+            if (event.date) {
+                document.getElementById('eventDate').value = new Date(event.date).toISOString().slice(0, 16);
+            }
+            document.getElementById('modalTitle').textContent = 'تعديل المناسبة';
+            showEventModal();
+        }
+    } catch (error) {
+        console.error('Error editing event:', error);
+        showAlert('حدث خطأ في تحميل بيانات المناسبة', 'error');
+    }
+}
+
+// حذف مناسبة
+async function deleteEvent(eventId) {
+    try {
+        const result = await Swal.fire({
+            title: 'تأكيد الحذف',
+            text: 'هل أنت متأكد من حذف هذه المناسبة؟',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'نعم، احذف',
+            cancelButtonText: 'إلغاء'
+        });
+
+        if (result.isConfirmed) {
+            await db.collection('events').doc(eventId).delete();
+            showAlert('تم حذف المناسبة بنجاح', 'success');
+            loadEvents();
+            loadDashboardData();
+        }
+    } catch (error) {
+        console.error('Error deleting event:', error);
+        showAlert('حدث خطأ في حذف المناسبة', 'error');
+    }
+}
+
+// تحديث حالة الدعوة
+async function updateInvitationStatus(invitationId, newStatus) {
+    try {
+        await db.collection('invitations').doc(invitationId).update({
+            status: newStatus,
+            updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showAlert('تم تحديث حالة الدعوة بنجاح', 'success');
+        loadInvitations();
+    } catch (error) {
+        console.error('Error updating invitation:', error);
+        showAlert('حدث خطأ في تحديث حالة الدعوة', 'error');
+    }
+}
+
+
+
+
+
+
+
+        // تحميل البيانات عند بدء التطبيق
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDashboardData();
+            document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+        });
+
+
+
+        // إضافة مستمعي الأحداث عند تحميل الصفحة
+document.addEventListener('DOMContentLoaded', () => {
+    // تحميل البيانات الأولية
+    loadDashboardData();
+
+    // إضافة مستمع لنموذج المناسبة
+    document.getElementById('eventForm').addEventListener('submit', handleEventSubmit);
+
+    // إضافة مستمع لفلتر الدعوات
+    document.getElementById('invitationFilter').addEventListener('change', loadInvitations);
+
+    // مراقبة التغييرات في قاعدة البيانات
+    db.collection('invitations').onSnapshot(() => {
+        if (document.getElementById('invitationsTab').style.display !== 'none') {
+            loadInvitations();
+        }
+    });
+
+    db.collection('events').onSnapshot(() => {
+        if (document.getElementById('eventsTab').style.display !== 'none') {
+            loadEvents();
+        }
+    });
+});
+    </script>
+</body>
+</html>
