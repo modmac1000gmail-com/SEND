@@ -1,0 +1,1233 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام نقاط البيع الاحترافي</title>
+    
+    <!-- CSS Libraries -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    
+    <!-- Additional Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/qrious@4.0.2/dist/qrious.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    
+    <style>
+        * {
+            font-family: 'Cairo', sans-serif;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #3730a3;
+            --secondary: #059669;
+            --accent: #dc2626;
+            --warning: #d97706;
+            --info: #0284c7;
+            --success: #059669;
+            --error: #dc2626;
+            --bg-primary: #f8fafc;
+            --bg-secondary: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #e5e7eb;
+            --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            box-shadow: var(--shadow-lg);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(79, 70, 229, 0.3);
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--secondary), #047857);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--error), #b91c1c);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 12px 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: white;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+        }
+
+        .sidebar {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            min-height: 100vh;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-item {
+            padding: 16px 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-radius: 12px;
+            margin: 4px 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-item:hover, .sidebar-item.active {
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-4px);
+        }
+
+        .cart-item {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 12px;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+        }
+
+        .cart-item:hover {
+            transform: translateX(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .product-card {
+            background: white;
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .product-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .stats-card {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border-radius: 16px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .stats-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: var(--shadow-lg);
+            transform: translateX(500px);
+            transition: all 0.3s ease;
+        }
+
+        .notification.show {
+            transform: translateX(0);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                right: -100%;
+                width: 280px;
+                z-index: 1000;
+                transition: right 0.3s ease;
+            }
+            
+            .sidebar.mobile-open {
+                right: 0;
+            }
+            
+            .main-content {
+                margin-right: 0 !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Mobile Menu Button -->
+    <button id="mobileMenuBtn" class="fixed top-4 right-4 z-50 md:hidden bg-white p-3 rounded-lg shadow-lg">
+        <i class="fas fa-bars text-gray-700"></i>
+    </button>
+
+    <!-- Sidebar -->
+    <div id="sidebar" class="sidebar fixed right-0 top-0 w-80 z-40">
+        <div class="p-6">
+            <div class="flex items-center mb-8">
+                <div class="w-12 h-12 bg-white bg-opacity-20 rounded-lg flex items-center justify-center ml-3">
+                    <i class="fas fa-cash-register text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-bold">نظام نقاط البيع</h1>
+                    <p class="text-sm opacity-80">الإصدار الاحترافي</p>
+                </div>
+            </div>
+            
+            <nav class="space-y-2">
+                <div class="sidebar-item active" data-section="sales">
+                    <i class="fas fa-shopping-cart"></i>
+                    <span>المبيعات</span>
+                </div>
+                <div class="sidebar-item" data-section="products">
+                    <i class="fas fa-box"></i>
+                    <span>إدارة المنتجات</span>
+                </div>
+                <div class="sidebar-item" data-section="customers">
+                    <i class="fas fa-users"></i>
+                    <span>إدارة العملاء</span>
+                </div>
+                <div class="sidebar-item" data-section="loyalty">
+                    <i class="fas fa-star"></i>
+                    <span>برنامج الولاء</span>
+                </div>
+                <div class="sidebar-item" data-section="inventory">
+                    <i class="fas fa-warehouse"></i>
+                    <span>إدارة المخزون</span>
+                </div>
+                <div class="sidebar-item" data-section="reports">
+                    <i class="fas fa-chart-bar"></i>
+                    <span>التقارير</span>
+                </div>
+                <div class="sidebar-item" data-section="scanner">
+                    <i class="fas fa-qrcode"></i>
+                    <span>قارئ الباركود</span>
+                </div>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content mr-80 min-h-screen">
+        <!-- Sales Section -->
+        <section id="salesSection" class="section active p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">المبيعات</h2>
+                <div class="flex gap-4">
+                    <button class="btn-secondary" onclick="openNewSale()">
+                        <i class="fas fa-plus"></i>
+                        عملية بيع جديدة
+                    </button>
+                    <button class="btn-primary" onclick="openBarcodeScan()">
+                        <i class="fas fa-qrcode"></i>
+                        مسح باركود
+                    </button>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Products Grid -->
+                <div class="lg:col-span-2">
+                    <div class="glass-card p-6">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-xl font-bold">المنتجات</h3>
+                            <div class="flex gap-2">
+                                <input type="text" id="productSearch" class="form-input" placeholder="البحث عن منتج...">
+                                <select id="categoryFilter" class="form-input">
+                                    <option value="">جميع الفئات</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="productsGrid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+                            <!-- Products will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Shopping Cart -->
+                <div class="lg:col-span-1">
+                    <div class="glass-card p-6 sticky top-6">
+                        <h3 class="text-xl font-bold mb-4">سلة المشتريات</h3>
+                        
+                        <!-- Customer Selection -->
+                        <div class="mb-4">
+                            <label class="block text-sm font-bold mb-2">العميل</label>
+                            <div class="flex gap-2">
+                                <input type="text" id="customerSearch" class="form-input" placeholder="البحث عن عميل...">
+                                <button class="btn-primary" onclick="openCustomerModal()">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="selectedCustomer" class="mt-2 hidden">
+                                <!-- Selected customer info -->
+                            </div>
+                        </div>
+
+                        <!-- Cart Items -->
+                        <div id="cartItems" class="mb-4 max-h-64 overflow-y-auto">
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                                <p>السلة فارغة</p>
+                            </div>
+                        </div>
+
+                        <!-- Totals -->
+                        <div class="border-t pt-4 space-y-2">
+                            <div class="flex justify-between">
+                                <span>المجموع الفرعي:</span>
+                                <span id="subtotal">0 ر.س</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>الضريبة (15%):</span>
+                                <span id="tax">0 ر.س</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>الخصم:</span>
+                                <span id="discount">0 ر.س</span>
+                            </div>
+                            <div class="flex justify-between text-lg font-bold border-t pt-2">
+                                <span>الإجمالي:</span>
+                                <span id="total">0 ر.س</span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="mt-6 space-y-2">
+                            <button class="btn-primary w-full" onclick="processPayment()">
+                                <i class="fas fa-credit-card"></i>
+                                إتمام الدفع
+                            </button>
+                            <button class="btn-danger w-full" onclick="clearCart()">
+                                <i class="fas fa-trash"></i>
+                                مسح السلة
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loyalty Program Section -->
+        <section id="loyaltySection" class="section hidden p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">برنامج الولاء</h2>
+                <button class="btn-primary" onclick="openLoyaltySettings()">
+                    <i class="fas fa-cog"></i>
+                    إعدادات البرنامج
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Customer Search & Points Management -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4">إدارة النقاط</h3>
+                    
+                    <!-- Customer Search -->
+                    <div class="mb-6">
+                        <label class="block text-sm font-bold mb-2">البحث عن العميل</label>
+                        <div class="flex gap-2 mb-4">
+                            <input type="text" id="loyaltyCustomerSearch" class="form-input" placeholder="اسم العميل أو رقم الهاتف...">
+                            <button class="btn-primary" onclick="searchCustomerForLoyalty()">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                        
+                        <div id="loyaltyCustomerInfo" class="hidden">
+                            <!-- Customer info will be displayed here -->
+                        </div>
+                    </div>
+
+                    <!-- Points Actions -->
+                    <div id="pointsActions" class="hidden space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">إضافة نقاط</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="addPointsInput" class="form-input" placeholder="عدد النقاط">
+                                    <button class="btn-secondary" onclick="addLoyaltyPoints()">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">خصم نقاط</label>
+                                <div class="flex gap-2">
+                                    <input type="number" id="deductPointsInput" class="form-input" placeholder="عدد النقاط">
+                                    <button class="btn-danger" onclick="deductLoyaltyPoints()">
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-bold mb-2">سبب التعديل</label>
+                            <input type="text" id="pointsReason" class="form-input" placeholder="سبب إضافة أو خصم النقاط...">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Loyalty Statistics -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4">إحصائيات البرنامج</h3>
+                    <div class="space-y-4">
+                        <div class="stats-card">
+                            <div class="text-2xl font-bold" id="totalLoyaltyCustomers">0</div>
+                            <div class="text-sm opacity-80">إجمالي العملاء المسجلين</div>
+                        </div>
+                        <div class="stats-card bg-green-500">
+                            <div class="text-2xl font-bold" id="totalPointsIssued">0</div>
+                            <div class="text-sm opacity-80">إجمالي النقاط الممنوحة</div>
+                        </div>
+                        <div class="stats-card bg-orange-500">
+                            <div class="text-2xl font-bold" id="totalPointsRedeemed">0</div>
+                            <div class="text-sm opacity-80">إجمالي النقاط المستردة</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Scanner Section -->
+        <section id="scannerSection" class="section hidden p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-3xl font-bold">قارئ الباركود</h2>
+                <button class="btn-primary" onclick="startScanner()">
+                    <i class="fas fa-camera"></i>
+                    تشغيل الكاميرا
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Scanner -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4">الماسح الضوئي</h3>
+                    <div id="reader" class="w-full h-64 bg-gray-100 rounded-lg flex items-center justify-center">
+                        <div class="text-center text-gray-500">
+                            <i class="fas fa-qrcode text-4xl mb-2"></i>
+                            <p>اضغط على "تشغيل الكاميرا" لبدء المسح</p>
+                        </div>
+                    </div>
+                    <div id="scanResult" class="mt-4 hidden">
+                        <!-- Scan results will be displayed here -->
+                    </div>
+                </div>
+
+                <!-- Manual Input -->
+                <div class="glass-card p-6">
+                    <h3 class="text-xl font-bold mb-4">إدخال يدوي</h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-bold mb-2">كود المنتج</label>
+                            <input type="text" id="manualBarcode" class="form-input" placeholder="أدخل كود المنتج...">
+                        </div>
+                        <button class="btn-primary w-full" onclick="searchByBarcode()">
+                            <i class="fas fa-search"></i>
+                            البحث عن المنتج
+                        </button>
+                    </div>
+                    
+                    <div id="barcodeSearchResult" class="mt-4 hidden">
+                        <!-- Search results will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Overlay for Mobile -->
+    <div id="overlay" class="fixed inset-0 bg-black bg-opacity-50 z-30 hidden"></div>
+
+    <!-- Notification Container -->
+    <div id="notificationContainer"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-lg p-8 text-center">
+            <div class="loading mb-4"></div>
+            <p>جاري التحميل...</p>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyBo3NYLUxFTUjjkyFdZOCgXGNRfobXGiCM",
+            authDomain: "rojer-7ab7f.firebaseapp.com",
+            projectId: "rojer-7ab7f",
+            storageBucket: "rojer-7ab7f.firebasestorage.app",
+            messagingSenderId: "978537605589",
+            appId: "1:978537605589:web:1dc7bca9c59f828227f55c",
+            measurementId: "G-Z4PF2GYPD7"
+        };
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        let currentUser = null;
+        let cart = [];
+        let selectedCustomer = null;
+        let isScanning = false;
+
+        // Global POS State
+        const posState = {
+            products: [],
+            customers: [],
+            categories: [],
+            cart: [],
+            selectedCustomer: null,
+            loyaltySettings: {
+                pointsPerSAR: 1,
+                rewardPointValue: 0.01
+            }
+        };
+
+        // Initialize POS System
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Initializing Professional POS System...');
+            
+            showLoading(true);
+            
+            try {
+                await loadInitialData();
+                setupEventListeners();
+                showSection('sales');
+                
+                console.log('✅ POS System initialized successfully');
+                showNotification('مرحباً بك في نظام نقاط البيع الاحترافي', 'success');
+            } catch (error) {
+                console.error('❌ Error initializing POS:', error);
+                showNotification('خطأ في تحميل النظام', 'error');
+            } finally {
+                showLoading(false);
+            }
+        });
+
+        // Load Initial Data
+        async function loadInitialData() {
+            await Promise.all([
+                loadProducts(),
+                loadCustomers(),
+                loadCategories(),
+                loadLoyaltySettings(),
+                loadSampleData()
+            ]);
+        }
+
+        // Load sample data for demonstration
+        async function loadSampleData() {
+            // Sample products
+            const sampleProducts = [
+                { id: 'p1', name: 'هاتف ذكي', price: 1200, stock: 10, category: 'إلكترونيات', barcode: '123456789' },
+                { id: 'p2', name: 'لابتوب', price: 2500, stock: 5, category: 'إلكترونيات', barcode: '987654321' },
+                { id: 'p3', name: 'قميص قطني', price: 80, stock: 20, category: 'ملابس', barcode: '555666777' },
+                { id: 'p4', name: 'كتاب تقني', price: 45, stock: 15, category: 'كتب', barcode: '111222333' }
+            ];
+
+            // Sample customers
+            const sampleCustomers = [
+                { id: 'c1', name: 'أحمد محمد', phone: '0501234567', email: 'ahmed@example.com', loyaltyPoints: 150 },
+                { id: 'c2', name: 'فاطمة علي', phone: '0509876543', email: 'fatima@example.com', loyaltyPoints: 200 },
+                { id: 'c3', name: 'محمد السعيد', phone: '0505555555', email: 'mohammed@example.com', loyaltyPoints: 75 }
+            ];
+
+            posState.products = sampleProducts;
+            posState.customers = sampleCustomers;
+            posState.categories = ['إلكترونيات', 'ملابس', 'كتب', 'أغذية'];
+
+            renderProducts();
+            updateCustomerDropdown();
+        }
+
+        // Show Loading Overlay
+        function showLoading(show) {
+            const overlay = document.getElementById('loadingOverlay');
+            if (show) {
+                overlay.classList.remove('hidden');
+            } else {
+                overlay.classList.add('hidden');
+            }
+        }
+
+        // Show Notification
+        function showNotification(message, type = 'info', duration = 5000) {
+            const container = document.getElementById('notificationContainer');
+            const notification = document.createElement('div');
+            
+            const icons = {
+                success: 'fas fa-check-circle text-green-500',
+                error: 'fas fa-exclamation-circle text-red-500',
+                warning: 'fas fa-exclamation-triangle text-yellow-500',
+                info: 'fas fa-info-circle text-blue-500'
+            };
+            
+            notification.className = 'notification';
+            notification.innerHTML = `
+                <div class="p-4 flex items-center gap-3">
+                    <i class="${icons[type]}"></i>
+                    <p class="flex-1">${message}</p>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            container.appendChild(notification);
+            
+            // Show notification
+            setTimeout(() => notification.classList.add('show'), 100);
+            
+            // Auto remove
+            setTimeout(() => {
+                notification.classList.remove('show');
+                setTimeout(() => notification.remove(), 300);
+            }, duration);
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Mobile menu toggle
+            document.getElementById('mobileMenuBtn').addEventListener('click', toggleMobileMenu);
+            document.getElementById('overlay').addEventListener('click', closeMobileMenu);
+            
+            // Sidebar navigation
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.addEventListener('click', () => {
+                    const section = item.dataset.section;
+                    showSection(section);
+                    closeMobileMenu();
+                });
+            });
+
+            // Search inputs
+            document.getElementById('productSearch').addEventListener('input', filterProducts);
+            document.getElementById('categoryFilter').addEventListener('change', filterProducts);
+            document.getElementById('customerSearch').addEventListener('input', searchCustomers);
+            document.getElementById('loyaltyCustomerSearch').addEventListener('input', debounce(searchCustomerForLoyalty, 500));
+        }
+
+        // Show Section
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+                section.classList.remove('active');
+            });
+            
+            // Show selected section
+            const targetSection = document.getElementById(sectionName + 'Section');
+            if (targetSection) {
+                targetSection.classList.remove('hidden');
+                targetSection.classList.add('active');
+            }
+            
+            // Update sidebar active state
+            document.querySelectorAll('.sidebar-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            
+            const activeItem = document.querySelector(`[data-section="${sectionName}"]`);
+            if (activeItem) {
+                activeItem.classList.add('active');
+            }
+            
+            // Load section-specific data
+            switch(sectionName) {
+                case 'loyalty':
+                    loadLoyaltyStats();
+                    break;
+            }
+        }
+
+        // Mobile Menu Functions
+        function toggleMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebar.classList.toggle('mobile-open');
+            overlay.classList.toggle('hidden');
+        }
+
+        function closeMobileMenu() {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('overlay');
+            
+            sidebar.classList.remove('mobile-open');
+            overlay.classList.add('hidden');
+        }
+
+        // Utility Functions
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('ar-SA', {
+                style: 'currency',
+                currency: 'SAR',
+                minimumFractionDigits: 2
+            }).format(amount);
+        }
+
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        // Product Functions
+        function renderProducts() {
+            const grid = document.getElementById('productsGrid');
+            if (!grid) return;
+
+            grid.innerHTML = posState.products.map(product => `
+                <div class="product-card" onclick="addToCart('${product.id}')">
+                    <div class="p-4">
+                        <div class="w-full h-32 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-box text-3xl text-gray-400"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">${product.name}</h4>
+                        <p class="text-gray-600 mb-2">الفئة: ${product.category}</p>
+                        <p class="text-green-600 font-bold text-xl">${formatCurrency(product.price)}</p>
+                        <p class="text-sm text-gray-500">المخزون: ${product.stock}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterProducts() {
+            const searchTerm = document.getElementById('productSearch').value.toLowerCase();
+            const categoryFilter = document.getElementById('categoryFilter').value;
+            
+            const filteredProducts = posState.products.filter(product => {
+                const matchesSearch = product.name.toLowerCase().includes(searchTerm);
+                const matchesCategory = !categoryFilter || product.category === categoryFilter;
+                return matchesSearch && matchesCategory;
+            });
+
+            const grid = document.getElementById('productsGrid');
+            grid.innerHTML = filteredProducts.map(product => `
+                <div class="product-card" onclick="addToCart('${product.id}')">
+                    <div class="p-4">
+                        <div class="w-full h-32 bg-gray-200 rounded-lg mb-4 flex items-center justify-center">
+                            <i class="fas fa-box text-3xl text-gray-400"></i>
+                        </div>
+                        <h4 class="font-bold text-lg mb-2">${product.name}</h4>
+                        <p class="text-gray-600 mb-2">الفئة: ${product.category}</p>
+                        <p class="text-green-600 font-bold text-xl">${formatCurrency(product.price)}</p>
+                        <p class="text-sm text-gray-500">المخزون: ${product.stock}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Cart Functions
+        function addToCart(productId) {
+            const product = posState.products.find(p => p.id === productId);
+            if (!product) return;
+
+            const existingItem = posState.cart.find(item => item.id === productId);
+            
+            if (existingItem) {
+                existingItem.quantity += 1;
+            } else {
+                posState.cart.push({
+                    ...product,
+                    quantity: 1
+                });
+            }
+
+            updateCartDisplay();
+            showNotification(`تم إضافة ${product.name} إلى السلة`, 'success');
+        }
+
+        function updateCartDisplay() {
+            const cartItems = document.getElementById('cartItems');
+            
+            if (posState.cart.length === 0) {
+                cartItems.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-shopping-cart text-4xl mb-2"></i>
+                        <p>السلة فارغة</p>
+                    </div>
+                `;
+            } else {
+                cartItems.innerHTML = posState.cart.map(item => `
+                    <div class="cart-item">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h5 class="font-bold">${item.name}</h5>
+                                <p class="text-sm text-gray-600">${formatCurrency(item.price)} × ${item.quantity}</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button onclick="updateQuantity('${item.id}', ${item.quantity - 1})" class="btn-primary text-sm p-2">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <span class="w-8 text-center">${item.quantity}</span>
+                                <button onclick="updateQuantity('${item.id}', ${item.quantity + 1})" class="btn-primary text-sm p-2">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                                <button onclick="removeFromCart('${item.id}')" class="btn-danger text-sm p-2">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            
+            updateTotals();
+        }
+
+        function updateQuantity(productId, newQuantity) {
+            if (newQuantity <= 0) {
+                removeFromCart(productId);
+                return;
+            }
+
+            const item = posState.cart.find(item => item.id === productId);
+            if (item) {
+                item.quantity = newQuantity;
+                updateCartDisplay();
+            }
+        }
+
+        function removeFromCart(productId) {
+            posState.cart = posState.cart.filter(item => item.id !== productId);
+            updateCartDisplay();
+        }
+
+        function updateTotals() {
+            const subtotal = posState.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+            const tax = subtotal * 0.15;
+            const discount = 0;
+            const total = subtotal + tax - discount;
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('tax').textContent = formatCurrency(tax);
+            document.getElementById('discount').textContent = formatCurrency(discount);
+            document.getElementById('total').textContent = formatCurrency(total);
+        }
+
+        // Customer Functions
+        function updateCustomerDropdown() {
+            const categoryFilter = document.getElementById('categoryFilter');
+            categoryFilter.innerHTML = '<option value="">جميع الفئات</option>' + 
+                posState.categories.map(cat => `<option value="${cat}">${cat}</option>`).join('');
+        }
+
+        function searchCustomers() {
+            const searchTerm = document.getElementById('customerSearch').value.toLowerCase();
+            const customers = posState.customers.filter(customer => 
+                customer.name.toLowerCase().includes(searchTerm) || 
+                customer.phone.includes(searchTerm)
+            );
+            
+            if (searchTerm && customers.length > 0) {
+                console.log('Found customers:', customers);
+            }
+        }
+
+        // Loyalty Program Functions
+        function loadLoyaltyStats() {
+            document.getElementById('totalLoyaltyCustomers').textContent = posState.customers.length;
+            const totalPoints = posState.customers.reduce((sum, customer) => sum + customer.loyaltyPoints, 0);
+            document.getElementById('totalPointsIssued').textContent = totalPoints;
+            document.getElementById('totalPointsRedeemed').textContent = '0';
+        }
+
+        function searchCustomerForLoyalty() {
+            const searchTerm = document.getElementById('loyaltyCustomerSearch').value.toLowerCase();
+            const customer = posState.customers.find(c => 
+                c.name.toLowerCase().includes(searchTerm) || 
+                c.phone.includes(searchTerm)
+            );
+
+            const customerInfo = document.getElementById('loyaltyCustomerInfo');
+            const pointsActions = document.getElementById('pointsActions');
+
+            if (customer) {
+                customerInfo.innerHTML = `
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-800">${customer.name}</h4>
+                        <p class="text-blue-600">الهاتف: ${customer.phone}</p>
+                        <p class="text-blue-600">البريد: ${customer.email}</p>
+                        <p class="text-lg font-bold text-blue-800">النقاط الحالية: ${customer.loyaltyPoints}</p>
+                    </div>
+                `;
+                customerInfo.classList.remove('hidden');
+                pointsActions.classList.remove('hidden');
+                posState.selectedCustomer = customer;
+            } else {
+                customerInfo.classList.add('hidden');
+                pointsActions.classList.add('hidden');
+                posState.selectedCustomer = null;
+                if (searchTerm) {
+                    showNotification('لم يتم العثور على العميل', 'warning');
+                }
+            }
+        }
+
+        function addLoyaltyPoints() {
+            const points = parseInt(document.getElementById('addPointsInput').value);
+            const reason = document.getElementById('pointsReason').value;
+
+            if (!posState.selectedCustomer) {
+                showNotification('الرجاء اختيار عميل أولاً', 'warning');
+                return;
+            }
+
+            if (!points || points <= 0) {
+                showNotification('الرجاء إدخال عدد نقاط صحيح', 'warning');
+                return;
+            }
+
+            posState.selectedCustomer.loyaltyPoints += points;
+            
+            // Update display
+            searchCustomerForLoyalty();
+            loadLoyaltyStats();
+            
+            // Clear inputs
+            document.getElementById('addPointsInput').value = '';
+            document.getElementById('pointsReason').value = '';
+            
+            showNotification(`تم إضافة ${points} نقطة للعميل ${posState.selectedCustomer.name}`, 'success');
+        }
+
+        function deductLoyaltyPoints() {
+            const points = parseInt(document.getElementById('deductPointsInput').value);
+            const reason = document.getElementById('pointsReason').value;
+
+            if (!posState.selectedCustomer) {
+                showNotification('الرجاء اختيار عميل أولاً', 'warning');
+                return;
+            }
+
+            if (!points || points <= 0) {
+                showNotification('الرجاء إدخال عدد نقاط صحيح', 'warning');
+                return;
+            }
+
+            if (points > posState.selectedCustomer.loyaltyPoints) {
+                showNotification('عدد النقاط المطلوب خصمها أكبر من النقاط المتاحة', 'error');
+                return;
+            }
+
+            posState.selectedCustomer.loyaltyPoints -= points;
+            
+            // Update display
+            searchCustomerForLoyalty();
+            loadLoyaltyStats();
+            
+            // Clear inputs
+            document.getElementById('deductPointsInput').value = '';
+            document.getElementById('pointsReason').value = '';
+            
+            showNotification(`تم خصم ${points} نقطة من العميل ${posState.selectedCustomer.name}`, 'success');
+        }
+
+        // Scanner Functions
+        function startScanner() {
+            if (isScanning) {
+                stopScanner();
+                return;
+            }
+
+            const html5QrCode = new Html5Qrcode("reader");
+            
+            const config = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            html5QrCode.start(
+                { facingMode: "environment" },
+                config,
+                (decodedText, decodedResult) => {
+                    showNotification(`تم قراءة الباركود: ${decodedText}`, 'success');
+                    searchByBarcodeValue(decodedText);
+                    stopScanner();
+                },
+                (errorMessage) => {
+                    // Handle scan error
+                }
+            );
+
+            isScanning = true;
+            document.querySelector('[onclick="startScanner()"]').innerHTML = '<i class="fas fa-stop"></i> إيقاف الكاميرا';
+        }
+
+        function stopScanner() {
+            const html5QrCode = new Html5Qrcode("reader");
+            html5QrCode.stop().then(() => {
+                isScanning = false;
+                document.querySelector('[onclick="startScanner()"]').innerHTML = '<i class="fas fa-camera"></i> تشغيل الكاميرا';
+                document.getElementById('reader').innerHTML = `
+                    <div class="text-center text-gray-500">
+                        <i class="fas fa-qrcode text-4xl mb-2"></i>
+                        <p>اضغط على "تشغيل الكاميرا" لبدء المسح</p>
+                    </div>
+                `;
+            });
+        }
+
+        function searchByBarcode() {
+            const barcode = document.getElementById('manualBarcode').value;
+            if (barcode) {
+                searchByBarcodeValue(barcode);
+            } else {
+                showNotification('الرجاء إدخال كود المنتج', 'warning');
+            }
+        }
+
+        function searchByBarcodeValue(barcode) {
+            const product = posState.products.find(p => p.barcode === barcode);
+            
+            const resultDiv = document.getElementById('barcodeSearchResult');
+            
+            if (product) {
+                resultDiv.innerHTML = `
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-green-800">${product.name}</h4>
+                        <p class="text-green-600">السعر: ${formatCurrency(product.price)}</p>
+                        <p class="text-green-600">المخزون: ${product.stock}</p>
+                        <button onclick="addToCart('${product.id}')" class="btn-primary mt-2">
+                            <i class="fas fa-cart-plus"></i>
+                            إضافة للسلة
+                        </button>
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+            } else {
+                resultDiv.innerHTML = `
+                    <div class="bg-red-50 p-4 rounded-lg">
+                        <p class="text-red-600">لم يتم العثور على منتج بهذا الباركود</p>
+                    </div>
+                `;
+                resultDiv.classList.remove('hidden');
+            }
+        }
+
+        // Sales Functions
+        function openNewSale() {
+            clearCart();
+            showNotification('بدأت عملية بيع جديدة', 'info');
+        }
+
+        function openBarcodeScan() {
+            showSection('scanner');
+        }
+
+        function openCustomerModal() {
+            showNotification('سيتم فتح نافذة إدارة العملاء', 'info');
+        }
+
+        function processPayment() {
+            if (posState.cart.length === 0) {
+                showNotification('السلة فارغة، لا يمكن إتمام الدفع', 'warning');
+                return;
+            }
+
+            const total = posState.cart.reduce((sum, item) => sum + (item.price * item.quantity), 0) * 1.15;
+            
+            Swal.fire({
+                title: 'إتمام الدفع',
+                html: `
+                    <div class="text-center">
+                        <p class="text-lg mb-4">المبلغ الإجمالي: ${formatCurrency(total)}</p>
+                        <p>هل تريد إتمام عملية الدفع؟</p>
+                    </div>
+                `,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonText: 'إتمام الدفع',
+                cancelButtonText: 'إلغاء',
+                confirmButtonColor: '#059669'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Process payment logic here
+                    clearCart();
+                    showNotification('تم إتمام عملية الدفع بنجاح', 'success');
+                    
+                    // Generate receipt
+                    generateReceipt(total);
+                }
+            });
+        }
+
+        function generateReceipt(total) {
+            const receiptWindow = window.open('', '_blank');
+            receiptWindow.document.write(`
+                <html dir="rtl">
+                <head>
+                    <title>فاتورة البيع</title>
+                    <style>
+                        body { font-family: 'Cairo', sans-serif; padding: 20px; }
+                        .header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; }
+                        .items { margin: 20px 0; }
+                        .total { border-top: 2px solid #333; padding-top: 10px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <h1>فاتورة البيع</h1>
+                        <p>التاريخ: ${new Date().toLocaleString('ar-SA')}</p>
+                    </div>
+                    <div class="items">
+                        <h3>المشتريات:</h3>
+                        ${posState.cart.map(item => 
+                            `<p>${item.name} × ${item.quantity} = ${formatCurrency(item.price * item.quantity)}</p>`
+                        ).join('')}
+                    </div>
+                    <div class="total">
+                        <h3>الإجمالي: ${formatCurrency(total)}</h3>
+                    </div>
+                    <script>
+                        window.print();
+                    </script>
+                </body>
+                </html>
+            `);
+        }
+
+        function clearCart() {
+            posState.cart = [];
+            updateCartDisplay();
+            showNotification('تم مسح السلة', 'success');
+        }
+
+        // Placeholder Functions
+        async function loadProducts() {
+            console.log('Loading products from Firebase...');
+        }
+
+        async function loadCustomers() {
+            console.log('Loading customers from Firebase...');
+        }
+
+        async function loadCategories() {
+            console.log('Loading categories from Firebase...');
+        }
+
+        async function loadLoyaltySettings() {
+            console.log('Loading loyalty settings from Firebase...');
+        }
+
+        function openLoyaltySettings() {
+            showNotification('سيتم فتح إعدادات برنامج الولاء', 'info');
+        }
+
+        // Initialize system on page load
+        console.log('🎯 Professional POS System loaded and ready!');
+    </script>
+</body>
+</html>
